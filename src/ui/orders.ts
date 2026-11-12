@@ -37,6 +37,7 @@
  * hits the thing you see; DRAGS are laid on the ground (ui/marquee.ts).
  */
 
+import { t } from '../i18n';
 import { denied, orderAck } from '../core/audio';
 import { WORLD_SIZE } from '../config';
 import { wrapDelta } from '../core/util';
@@ -89,7 +90,7 @@ const ORDER_COLORS: Record<OrderKind, number> = {
   move: 0xf2d27a, attack: 0xff6a4d, attackBuilding: 0xff6a4d, garrison: 0x7fe0e8, worship: 0x7fe0e8, rally: 0xf2d27a, none: 0xffffff,
 };
 const ORDER_WORDS: Record<Exclude<OrderKind, 'none'>, string> = {
-  move: 'Go', attack: 'Attack', attackBuilding: 'Attack', garrison: 'In', worship: 'Commune', rally: 'Rally',
+  move: t('ord.go'), attack: t('ord.attack'), attackBuilding: t('ord.attack'), garrison: t('ord.in'), worship: t('ord.commune'), rally: t('ord.rally'),
 };
 const CURSOR_ICON: Record<Exclude<OrderKind, 'none'>, keyof typeof UI_ICONS> = {
   move: 'move', attack: 'attack', attackBuilding: 'attackBuilding', garrison: 'garrison', worship: 'worship', rally: 'rally',
@@ -348,7 +349,7 @@ export class OrderControl {
     }
     if (!tile) {
       // Sky: with people selected and orders on, say so; otherwise there is nothing there to keep.
-      if (orders) return this.refuse('Can\u2019t go there', px, py, null);
+      if (orders) return this.refuse(t('ord.nogo'), px, py, null);
       if (!shift) sel.clear();
       return;
     }
@@ -431,7 +432,7 @@ export class OrderControl {
     if (m >= 0) return void this.orderAt(w.monuments[m].x, w.monuments[m].z, { px, py });
     if (tile) return void this.orderAt(tile.x, tile.z, { px, py });
     // Sky, or nothing under the cursor at all: say so instead of doing nothing silently.
-    if (this.hasCommand()) this.refuse('Can’t go there', px, py, null);
+    if (this.hasCommand()) this.refuse(t('ord.nogo'), px, py, null);
   }
 
   /** Something is selected that an order would command. */
@@ -450,7 +451,7 @@ export class OrderControl {
     const refusedHere = () => w.events.slice(before).some((e) => e.type === 'denied');
     switch (c.kind) {
       case 'none':
-        if (this.hasCommand()) this.refuse('Nothing to do there', at?.px, at?.py, { x, z });
+        if (this.hasCommand()) this.refuse(t('ord.nothing'), at?.px, at?.py, { x, z });
         return false;
       case 'rally':
         w.setRally(c.building!.id, x, z);
@@ -464,7 +465,7 @@ export class OrderControl {
       case 'garrison':
         // Whoever can't go in (wrong kind, no room) walks to the door; the sim cues 'denied'.
         if (w.orderGarrison(ids, c.building!.id).accepted.length === 0) {
-          this.refuse('No room inside', at?.px, at?.py, { x: c.building!.x, z: c.building!.z }, true);
+          this.refuse(t('ord.noroom'), at?.px, at?.py, { x: c.building!.x, z: c.building!.z }, true);
           return false;
         }
         break;
@@ -478,7 +479,7 @@ export class OrderControl {
       case 'move':
         w.orderMove(ids, x, z);
         if (refusedHere() && ids.every((id) => w.unitById(id)?.state !== 'moving')) {
-          this.refuse('Can’t go there', at?.px, at?.py, { x, z }, true);
+          this.refuse(t('ord.nogo'), at?.px, at?.py, { x, z }, true);
           return false;
         }
         break;

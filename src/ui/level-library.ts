@@ -14,6 +14,7 @@
  * string, Delete is only offered for levels that are yours to delete.
  */
 
+import { t } from '../i18n';
 import { LevelData, codeToLevel, levelToCode } from '../level/level-format';
 import { OFFICIAL_LEVELS } from '../level/official-levels';
 import { CAMPAIGN } from '../level/campaign';
@@ -81,26 +82,26 @@ export class LevelLibrary {
     const header = document.createElement('div');
     header.className = 'lib-head';
     const title = document.createElement('h2');
-    title.innerHTML = carve('Level library');
+    title.innerHTML = carve(t('lib.title'));
 
     this.search = document.createElement('input');
-    this.search.placeholder = 'Search…';
+    this.search.placeholder = t('lib.search');
     this.search.style.width = '10rem';
     this.search.addEventListener('input', () => this.render());
     this.search.addEventListener('keydown', (e) => e.stopPropagation());
 
-    this.minStars = this.select(['Any rating', '★+', '★★+', '★★★+', '★★★★+', '★★★★★']);
-    this.sortBy = this.select(['Newest', 'Name', 'Rating']);
-    this.shelf = this.select(['All shelves', 'Official', 'Campaign', 'My levels']);
+    this.minStars = this.select([['Any rating', t('lib.anyrating')], '★+', '★★+', '★★★+', '★★★★+', '★★★★★']);
+    this.sortBy = this.select([['Newest', t('lib.newest')], ['Name', t('lib.name')], ['Rating', t('lib.rating')]]);
+    this.shelf = this.select([['All shelves', t('lib.allshelves')], ['Official', t('lib.official')], ['Campaign', t('lib.campaign')], ['My levels', t('lib.mine')]]);
 
     const importBtn = document.createElement('button');
     importBtn.className = 'tg-btn';
-    importBtn.innerHTML = `${icon('plus', 14)}<span>Import code</span>`;
+    importBtn.innerHTML = `${icon('plus', 14)}<span>${t('lib.import')}</span>`;
     importBtn.addEventListener('click', () => void this.importCode());
 
     const close = document.createElement('button');
     close.className = 'tg-btn';
-    close.innerHTML = `${icon('close', 14)}<span>Close</span>`;
+    close.innerHTML = `${icon('close', 14)}<span>${t('lib.close')}</span>`;
     close.addEventListener('click', () => {
       this.hide();
       hooks.onClose();
@@ -163,7 +164,7 @@ export class LevelLibrary {
     let entries = this.entries().filter((e) => {
       if (getRating(e.id) < minStars) return false;
       if (!q) return true;
-      const name = e.campaign?.title ?? e.level?.name ?? OFFICIAL_NAMES[e.id] ?? e.id;
+      const name = e.campaign?.title ?? e.level?.name ?? offName(e.id) ?? e.id;
       const author = e.level?.author ?? 'Tribal Gods';
       return (name + ' ' + author).toLowerCase().includes(q);
     });
@@ -172,7 +173,7 @@ export class LevelLibrary {
     entries = entries.sort((a, b) => {
       if (sort === 'rating') return getRating(b.id) - getRating(a.id);
       if (sort === 'name') {
-        const nm = (e: CardEntry) => e.campaign?.title ?? e.level?.name ?? OFFICIAL_NAMES[e.id] ?? '';
+        const nm = (e: CardEntry) => e.campaign?.title ?? e.level?.name ?? offName(e.id) ?? '';
         return nm(a).localeCompare(nm(b));
       }
       return (b.official ? 1 : 0) - (a.official ? 1 : 0) || (a.campaign?.chapter ?? 0) - (b.campaign?.chapter ?? 0) || b.savedAt - a.savedAt; // newest, officials pinned first
@@ -182,7 +183,7 @@ export class LevelLibrary {
     if (entries.length === 0) {
       const empty = document.createElement('div');
       empty.style.color = 'var(--text-3)';
-      empty.textContent = 'Nothing here. Build something in the editor, or import a friend’s code.';
+      empty.textContent = t('lib.empty');
       this.grid.appendChild(empty);
     }
   }
@@ -190,14 +191,14 @@ export class LevelLibrary {
   private card(e: CardEntry): HTMLDivElement {
     const card = document.createElement('div');
     card.className = 'lib-card tg-panel mat-hide';
-    const name = e.campaign ? `${e.campaign.chapter}. ${e.campaign.title}` : e.level?.name ?? OFFICIAL_NAMES[e.id] ?? e.id;
+    const name = e.campaign ? `${e.campaign.chapter}. ${e.campaign.title}` : e.level?.name ?? offName(e.id) ?? e.id;
     const author = e.level?.author ?? 'Tribal Gods';
-    const desc = e.campaign ? (e.campaign.locked ? 'Locked — reach this chapter in the campaign.' : e.campaign.tagline) : e.level?.desc ?? OFFICIAL_DESCS[e.id] ?? '';
+    const desc = e.campaign ? (e.campaign.locked ? t('lib.locked') : e.campaign.tagline) : e.level?.desc ?? offDesc(e.id);
 
     const head = document.createElement('div');
     head.innerHTML =
-      `<div class="name">${escapeHtml(name)}${e.campaign ? '<span class="off">campaign</span>' : e.official ? '<span class="off">official</span>' : ''}</div>` +
-      `<div class="by">by ${escapeHtml(author)}</div>`;
+      `<div class="name">${escapeHtml(name)}${e.campaign ? `<span class="off">${t('lib.tag.campaign')}</span>` : e.official ? `<span class="off">${t('lib.tag.official')}</span>` : ''}</div>` +
+      `<div class="by">${escapeHtml(t('lib.by', { author }))}</div>`;
     const blurb = document.createElement('div');
     blurb.className = 'desc';
     blurb.textContent = desc;
@@ -236,7 +237,7 @@ export class LevelLibrary {
     if (e.campaign) {
       // Chapters play through the campaign (briefing, boons, progress) — once reached.
       if (!e.campaign.locked) {
-        act('Play', () => {
+        act(t('lib.play'), () => {
           this.hide();
           this.hooks.onPlayScenario?.(e.id);
         }, true);
@@ -244,24 +245,24 @@ export class LevelLibrary {
       card.append(head, blurb, stars, actions);
       return card;
     }
-    act('Play', () => {
+    act(t('lib.play'), () => {
       this.hide();
       void resolve().then((l) => this.hooks.onPlay(l));
     }, true);
-    act('Edit', () => {
+    act(t('lib.edit'), () => {
       this.hide();
       void resolve().then((l) => this.hooks.onEdit(e.official ? undefined : e.id, l));
     });
-    act('Copy code', () => void resolve().then(async (l) => {
+    act(t('lib.copy'), () => void resolve().then(async (l) => {
       const code = await levelToCode(l);
       try {
         await navigator.clipboard.writeText(code);
       } catch {
-        prompt('Copy your level code:', code);
+        prompt(t('lib.copyprompt'), code);
       }
     }));
     if (!e.official) {
-      act('Delete', () => {
+      act(t('lib.delete'), () => {
         deleteLevel(e.id);
         this.render();
       });
@@ -272,24 +273,25 @@ export class LevelLibrary {
   }
 
   private async importCode(): Promise<void> {
-    const code = prompt('Paste a level code (TG2.… or TG1.…):');
+    const code = prompt(t('lib.pasteprompt'));
     if (!code) return;
     try {
       const level = await codeToLevel(code);
       saveLevel(level);
       this.render();
     } catch (err) {
-      alert(`Could not import: ${(err as Error).message}`);
+      alert(t('lib.importfail', { msg: (err as Error).message }));
     }
   }
 
-  private select(options: string[]): HTMLSelectElement {
+  private select(options: Array<string | [string, string]>): HTMLSelectElement {
     const s = document.createElement('select');
 
     for (const o of options) {
       const opt = document.createElement('option');
-      opt.textContent = o;
-      opt.value = o;
+      const [val, label] = typeof o === 'string' ? [o, o] : o;
+      opt.textContent = label;
+      opt.value = val;
       s.appendChild(opt);
     }
     s.addEventListener('change', () => this.render());
@@ -297,17 +299,15 @@ export class LevelLibrary {
   }
 }
 
-/** Official metadata without building the whole level (cards render instantly). */
-const OFFICIAL_NAMES: Record<string, string> = {
-  official_first_light: 'First Light',
-  official_the_strait: 'The Strait',
-  official_crucible: 'The Crucible',
+/** Official metadata without building the whole level (cards render instantly); texts come from the dictionary. */
+
+const OFF_KEYS: Record<string, [string, string]> = {
+  official_first_light: [t('lib.o.first_light'), t('lib.d.first_light')],
+  official_the_strait: [t('lib.o.the_strait'), t('lib.d.the_strait')],
+  official_crucible: [t('lib.o.crucible'), t('lib.d.crucible')],
 };
-const OFFICIAL_DESCS: Record<string, string> = {
-  official_first_light: 'A kind world to learn godhood on. The stones are near; the enemy is far.',
-  official_the_strait: 'An ocean apart. Causeway is on your shore — claim it first.',
-  official_crucible: 'One continent, one volcano, two gods. Exactly the standoff it looks like.',
-};
+const offName = (id: string): string | undefined => OFF_KEYS[id]?.[0];
+const offDesc = (id: string): string => OFF_KEYS[id]?.[1] ?? '';
 
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
