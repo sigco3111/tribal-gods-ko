@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>트라이벌 갓즈 · UI 미리보기 (WebGL 없음)</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #1a2230; }
+      /* Stand-in for the 3D planet: sky over a round green-blue horizon. */
+      #bg { position: fixed; inset: 0; background:
+        radial-gradient(ellipse 90% 70% at 70% 120%, #3b6b43 0 45%, #2c5a73 46% 60%, transparent 61%),
+        linear-gradient(180deg, #2a3b57 0%, #6b87a6 70%, #9fb7c9 100%); }
+    </style>
+  </head>
+  <body>
+    <div id="bg"></div>
+    <script type="module" src="/src/ui-preview.ts"></script>
+  </body>
+</html>

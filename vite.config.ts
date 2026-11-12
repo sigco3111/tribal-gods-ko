@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import { resolve } from 'node:path';
 
 // The game ships as a static site to GitHub Pages at
 // https://br3nt.github.io/tribal-gods/ — a *project* page, so every asset
@@ -12,9 +13,11 @@ import { defineConfig } from 'vite';
 // renderer + procedural models, and the rest (UI, world, boot). Behaviour is
 // unchanged — the same modules, loaded up front, just in separate files.
 export default defineConfig({
-  base: '/tribal-gods/',
+  base: '/tribal-gods-ko/',
+  // ui-preview.html (the menus and HUD over a CSS backdrop, no WebGL) ships too: it lets the Korean UI be checked without a GPU.
   build: {
     rollupOptions: {
+      input: { main: resolve(import.meta.dirname, 'index.html'), uiPreview: resolve(import.meta.dirname, 'ui-preview.html') },
       output: {
         manualChunks(id) {
           // three ships as two modules (core math/scene graph, and the WebGL
