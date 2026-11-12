@@ -21,6 +21,7 @@
  */
 
 import './i18n-catalog'; // first: patches the catalog to the chosen language before any module reads it
+import { t } from './i18n';
 import * as THREE from 'three';
 import { WORLD_SIZE } from './config';
 import { startLoop } from './core/loop';
@@ -290,7 +291,7 @@ function autosave(): void {
   if (world.gameOver) return clearSave();
   if (world.elapsed < 5) return;
   const kind = campaign.active ? 'campaign' : lastStart.level ? 'level' : 'skirmish';
-  const what = kind === 'campaign' ? campaign.titleOf(campaign.active!) : kind === 'level' ? lastStart.level!.name : 'Skirmish';
+  const what = kind === 'campaign' ? campaign.titleOf(campaign.active!) : kind === 'level' ? lastStart.level!.name : t('menu.skirmish');
   writeSave({
     v: 1,
     kind,
@@ -348,7 +349,7 @@ async function startLevel(level: LevelData, asTest = false, rules?: ScenarioRule
   } catch (err) {
     // A damaged imported level: say so and go back to the title, never a dead screen.
     console.warn('level failed to load', err);
-    alert(`This level could not be loaded: ${(err as Error).message}`);
+    alert(t('main.loadfail', { msg: (err as Error).message }));
     quitToMenu();
     return false;
   }
@@ -426,7 +427,7 @@ menu.onCampaign = () => {
 };
 if (menu.visible) menu.show('title'); // re-render: the Campaign door is open now
 registerGameOverAction(() =>
-  campaign.active ? { label: 'Campaign debrief', primary: true, icon: 'arrowRight', run: () => campaign.handleGameOver() } : null,
+  campaign.active ? { label: t('main.debrief'), primary: true, icon: 'arrowRight', run: () => campaign.handleGameOver() } : null,
 );
 
 const editor = new Editor(rig.camera, rig.target, world, renderer.domElement, {
@@ -451,7 +452,7 @@ menu.onEditor = () => freshEditorCanvas();
 const backBtn = document.createElement('button');
 backBtn.type = 'button';
 backBtn.className = 'tg-btn primary';
-backBtn.textContent = 'Back to the editor';
+backBtn.textContent = t('main.backedit');
 backBtn.style.cssText = 'position: fixed; top: calc(var(--edge, 1rem) + 4.2rem); left: var(--edge, 1rem); z-index: 15; display: none;';
 backBtn.addEventListener('click', () => {
   if (!lastEdit.level) return;

@@ -12,6 +12,7 @@
 import { CIVS, DIFFICULTIES } from './config';
 import { BUILDINGS, DWELLING_TIERS, SPELLS, TRIBE_LABELS, UNITS } from './sim/catalog';
 import { getLang } from './i18n';
+import { BOONS } from './campaign/boons';
 
 /** kind → [name, blurb] */
 export const UNIT_KO: Record<string, [string, string]> = {
@@ -65,6 +66,19 @@ export const DIFF_KO: Record<string, string> = {
 
 export const TRIBE_KO: Record<string, string> = { player: '나의 부족', red: '붉은 부족', gold: '황금 부족', violet: '보라 부족' };
 
+/** boon id → [name, blurb] */
+export const BOON_KO: Record<string, [string, string]> = {
+  deepWell: ['깊은 우물', '폭발이 한 번 더 충전됩니다.'],
+  kinfolk: ['일가친척', '상륙할 때마다 주민 세 명이 더 합류합니다.'],
+  secondHearth: ['두 번째 화덕', '거처가 이미 한 채 서 있는 채로 시작합니다.'],
+  stockpile: ['비축 목재', '시작할 때 목재 8개를 더 가집니다.'],
+  quickKindle: ['빠른 불씨', '불씨가 3분의 1 빨리 충전되고 한 번 더 담아 둘 수 있습니다.'],
+  spearGuard: ['창 호위대', '처음부터 전사 두 명이 주술사와 함께 걷습니다.'],
+  wardstone: ['수호석', '매 시나리오를 돌의 가호 한 번이 공짜로 시작합니다.'],
+  swiftBlast: ['날랜 폭발', '폭발이 5분의 1 빨리 충전됩니다.'],
+  stormCarrier: ['폭풍 운반자', '번개가 한 번 더 충전됩니다.'],
+};
+
 export function localizeCatalog(): void {
   Object.assign(TRIBE_LABELS, TRIBE_KO);
   for (const [k, [name, blurb]] of Object.entries(UNIT_KO)) Object.assign((UNITS as any)[k], { name, blurb });
@@ -75,6 +89,7 @@ export function localizeCatalog(): void {
     if (ko) [s.name, s.blurb] = ko;
   }
   for (const [k, [name, leaderTitle, blurb]] of Object.entries(CIV_KO)) Object.assign((CIVS as any)[k], { name, leaderTitle, blurb });
+  for (const [k, [name, blurb]] of Object.entries(BOON_KO)) Object.assign((BOONS as any)[k], { name, blurb });
   for (const [k, label] of Object.entries(DIFF_KO)) (DIFFICULTIES as any)[k].label = label;
 }
 
