@@ -20,6 +20,7 @@
  * (brush, orders) writes to the sim only through its public methods.
  */
 
+import './i18n-catalog'; // first: patches the catalog to the chosen language before any module reads it
 import * as THREE from 'three';
 import { WORLD_SIZE } from './config';
 import { startLoop } from './core/loop';
