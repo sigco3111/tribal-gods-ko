@@ -13,11 +13,11 @@ const files = walk(join(root, 'src')).filter((f) => !/i18n(-ui|-catalog)?\.ts$/.
 const source = files.map((f) => readFileSync(f, 'utf8')).join('\n');
 
 const vite = await createServer({ root, logLevel: 'silent', server: { middlewareMode: true }, appType: 'custom' });
-const { DICT, HANGUL_RE } = await vite.ssrLoadModule('/src/i18n.ts');
+const ssr = (p) => vite.ssrLoadModule(p);
+const { DICT, HANGUL_RE } = await ssr('/src/i18n.ts');
 const C = await vite.ssrLoadModule('/src/i18n-catalog.ts');
 const { UNITS, BUILDINGS, SPELLS, DWELLING_TIERS } = await vite.ssrLoadModule('/src/sim/catalog.ts');
 const { CIVS, DIFFICULTIES } = await vite.ssrLoadModule('/src/config.ts');
-await vite.close();
 
 const errors = [];
 const used = new Set();
@@ -35,7 +35,7 @@ for (const k of Object.keys(DICT.en)) {
 const ph = (s) => (s.match(/\{\w+\}/g) ?? []).sort().join(',');
 for (const k of Object.keys(DICT.ko)) {
   if (!HANGUL_RE.test(DICT.ko[k])) errors.push(`ko "${k}" has no Hangul`);
-  if (k in DICT.en && ph(DICT.en[k]) !== ph(DICT.ko[k]) && !/^(sim\.buildinglost|hint\.nocharge|stone\.guard\.sleep|al\.ritual|sb\.notcharging\.why|stone\.lend|stone\.unit)$/.test(k)) errors.push(`placeholders differ in "${k}": ${ph(DICT.en[k])} vs ${ph(DICT.ko[k])}`);
+  if (k in DICT.en && ph(DICT.en[k]) !== ph(DICT.ko[k]) && !/^(sim\.buildinglost|hint\.nocharge|stone\.guard\.sleep|al\.ritual|sb\.notcharging\.why|stone\.lend|stone\.unit|cs\.fail\.building|cs\.defeat\.(one|many)|cs\.stone\.gift|cs\.allied)$/.test(k)) errors.push(`placeholders differ in "${k}": ${ph(DICT.en[k])} vs ${ph(DICT.ko[k])}`);
 }
 for (const k of Object.keys(UNITS)) if (!C.UNIT_KO[k]) errors.push(`unit ${k} has no Korean text`);
 for (const k of Object.keys(BUILDINGS)) if (!C.BUILDING_KO[k]) errors.push(`building ${k} has no Korean text`);
@@ -55,6 +55,22 @@ for (const f of readdirSync(campDir).filter((n) => /^c(0[1-9]|10)-/.test(n))) {
     if (!simEn.has(en)) errors.push(`${f}: no Korean entry for "${en.slice(0, 70)}"`);
   }
 }
-console.log(`UI keys: ${Object.keys(DICT.en).length} (used literally in source: ${used.size}, dynamic prefixes: ${prefixes.size}); campaign c01-c10 strings: ${storyN}; catalog: ${Object.keys(UNITS).length} units, ${Object.keys(BUILDINGS).length} buildings, ${SPELLS.length} spells, ${Object.keys(CIVS).length} civs`);
+// T2c: tribe names, level names/descriptions (campaign + official) and boons shown to the player
+let extraN = 0;
+const quoted = (src, re) => [...src.matchAll(re)].map((m) => m[1].replace(/\\'/g, "'"));
+const lvlSrc = readdirSync(campDir).filter((n) => /^c(0[1-9]|10)-/.test(n)).map((n) => readFileSync(join(campDir, n), 'utf8')).join('\n') + readFileSync(join(root, 'src/level/official-levels.ts'), 'utf8');
+for (const en of new Set([...quoted(lvlSrc, /\bname: '((?:[^'\\]|\\.)*)'/g), ...quoted(lvlSrc, /\bdesc: '((?:[^'\\]|\\.)*)'/g)])) {
+  extraN++;
+  if (!simEn.has(en)) errors.push(`level/tribe text without Korean entry: "${en.slice(0, 70)}"`);
+}
+const { BOONS } = await ssr('/src/campaign/boons.ts');
+for (const id of Object.keys(BOONS)) if (!C.BOON_KO[id] || !C.BOON_KO[id].every((x) => HANGUL_RE.test(x))) errors.push(`boon ${id} has no Korean text`);
+// the chrome of src/ui/campaign-screens.ts, src/ui/campaign.ts and src/level/level-format.ts goes through t(): no raw English may be left in these calls
+for (const f of ['src/ui/campaign-screens.ts', 'src/ui/campaign.ts', 'src/level/level-format.ts']) {
+  const src = readFileSync(join(root, f), 'utf8');
+  for (const m of src.matchAll(/(?:el\([^,()]+,\s*(?:undefined|'[\w ]+'),\s*|button\(|throw new Error\(|fail\()'([A-Z][a-z][^']*)'/g)) errors.push(`${f}: raw English "${m[1].slice(0, 50)}"`);
+}
+await vite.close();
+console.log(`level/tribe/boon texts: ${extraN}; UI keys: ${Object.keys(DICT.en).length} (used literally in source: ${used.size}, dynamic prefixes: ${prefixes.size}); campaign c01-c10 strings: ${storyN}; catalog: ${Object.keys(UNITS).length} units, ${Object.keys(BUILDINGS).length} buildings, ${SPELLS.length} spells, ${Object.keys(CIVS).length} civs`);
 if (errors.length) { console.error(errors.join('\n')); process.exit(1); }
 console.log('i18n check OK');
