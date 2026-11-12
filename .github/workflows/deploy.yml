@@ -44,3 +44,4 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+# 한글화 저장소(sigco3111/tribal-gods-ko): 사이트 경로는 vite.config.ts의 base(/tribal-gods-ko/)와 맞춥니다.
