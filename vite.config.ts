@@ -17,8 +17,10 @@ export default defineConfig({
   // ui-preview.html (the menus and HUD over a CSS backdrop, no WebGL) ships too: it lets the Korean UI be checked without a GPU.
   build: {
     rollupOptions: {
-      input: { main: resolve(import.meta.dirname, 'index.html'), uiPreview: resolve(import.meta.dirname, 'ui-preview.html') },
+      input: { main: resolve(import.meta.dirname, 'index.html'), uipreview: resolve(import.meta.dirname, 'ui-preview.html') },
       output: {
+        // lowercase hex hashes only: the repo is also published from docs/ through the GitHub web uploader, which lowercases file names.
+        hashCharacters: 'hex',
         manualChunks(id) {
           // three ships as two modules (core math/scene graph, and the WebGL
           // renderer on top) plus the example add-ons we use for post
