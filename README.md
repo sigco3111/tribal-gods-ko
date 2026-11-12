@@ -21,12 +21,13 @@
 - `src/i18n.ts`, `src/i18n-ui.ts`, `src/i18n-catalog.ts`로 이루어진 번역 계층을 추가했습니다. 기본은 한국어이고, 메뉴나 설정에서 영어로 바꿀 수 있으며 `?lang=en` / `?lang=ko` 주소 값으로도 고를 수 있습니다. 시뮬레이션 코드와 헤드리스 테스트는 영어 그대로 동작합니다.
 - 한국어 글꼴 목록(Pretendard, Noto Sans KR, Apple SD Gothic Neo, Malgun Gothic)을 추가했습니다. 외부 글꼴·CDN·분석 요청은 없습니다.
 - 조사(은/는, 이/가, 을/를, 과/와)를 받침에 맞게 붙이는 `josa()`를 넣었습니다.
+- 월드 호버 설명, 명령 커서 문구("이동·공격·집결…"), 레벨 보관함(`level-library.ts`), 캠페인 축복 9종, 공식 레벨 3종 이름·설명, 불러오기 실패 안내를 추가로 한글화했습니다.
 - `vite.config.ts`의 `base`를 `/tribal-gods-ko/`로 바꾸고 `ui-preview.html`을 빌드에 포함했습니다.
 - `tools/check-i18n.mjs`(번역 키 검사), `tools/list-strings.mjs`(남은 영어 문자열 목록), `test/ui-dom.test.ts`(한국어 화면에 영어 단어가 남지 않는지 확인)를 추가했습니다.
 
 ## 아직 번역하지 않은 부분
 
-선택 패널·월드 호버·명령 안내·캠페인 힌트, 캠페인 장 이야기(`src/level/campaign/`)·축복(`boons.ts`)·캠페인 화면, 레벨 편집기·레벨 라이브러리는 아직 영어입니다. 자세한 개수는 [NOTES.md](NOTES.md)에 있습니다.
+캠페인 장 이야기(`src/level/campaign/`, 약 280줄), 내레이터 조언(`src/ui/objective-advice.ts`), 캠페인 장 제목·한 줄 설명은 아직 영어입니다. 다음 차례에 옮길 예정이며 개수는 [NOTES.md](NOTES.md)에 있습니다.
 
 ## 실행
 
