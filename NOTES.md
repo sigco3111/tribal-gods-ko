@@ -37,14 +37,20 @@
 
 - 배포(T2c): 소스 5개 커밋(src·src/ui·src/level·tools·test)과 docs/assets(8개)·docs(index/ui-preview) 커밋, 옛 파일 3개 삭제 후 사이트 전 파일 200, 삭제한 3개는 404, `ui-preview.html` 로드 확인, 배포된 번들에서 `cs.*`/`sim.tribe.*` 한국어 항목과 main 청크의 `cs.tomap` 호출 확인. 실제 WebGL 게임은 열지 않았습니다(ui-preview에서 "캠페인"을 누르면 게임이 시작되므로 거기서 캠페인 화면 확인 불가).
 
-## 남은 영어 (T2c 마지막 점검: `node tools/list-strings.mjs`)
-플레이어에게 보이는데 아직 영어인 것:
-- `src/ui/selection-panel.ts` 약 63줄: 선택 패널(“Your tribe”, “Training a …”, “Needs … more wood”, “Residents”, “Garrison”, “Ritual”, 피해/사거리/방어 등 수치 라벨, 도움말 문장). 가장 큰 남은 덩어리.
-- `src/ui/editor.ts` 약 43줄: 레벨 편집기 도구 이름·툴팁·상태 메시지·기본 레벨 이름 “Untitled Planet”·“anonymous god”·TRIBE_NAMES.
-- `src/ui/hotkeys.ts`: 단축키 그룹 이름(Camera/Selection/Spells/Build/Game, 도움말 화면의 그룹 제목은 별도 번역됨)과 키 이름(Esc/Space 등은 키 표기라 그대로).
-- `src/ui/level-library.ts`: 정렬/선반 `<select>`의 값은 영어(보이는 라벨은 번역됨), 작성자 “Tribal Gods”(고유명), `src/main.ts` “saved game could not be restored”·“level failed to load”(콘솔 로그로 추정), `src/ui/debug-overlay.ts`(개발자용, 숨김).
-- `src/sim/*`(rules/objectives/world-state/catalog 약 100줄)와 `src/config.ts`의 영어는 헤드리스 시뮬레이션 원문이며 `tx()`/`localizeCatalog()`가 화면에서 번역합니다(누락 아님).
-- `src/level/campaign/c01~c10`·`src/campaign/boons.ts`·`src/level/official-levels.ts`의 영어 원문은 데이터(번역은 사전/패치로 적용).
+## 완료 (T2d)
+- `src/ui/selection-panel.ts` 선택 패널 전부를 `t('sp.*')`로 번역(키 63개): 부족 라벨(나의 부족/부족 없음), 유닛 능력치 라벨(피해·사거리·방어·속도), 훈련 상태("{이름} 훈련 중 · 시간", "목재 N개가 더 필요합니다", "대기열이 비었어요"), 거처 성장("가득 차면 자라요", "자라려면 목재 N개가 더 필요해요", 성장 설명), 주둔/기도 안내, 집결지·철거(두 번 눌러 확인), 선돌(전수/대여 설명, 의식 진행 "방해받는 중"), 주술사·주민·방랑자·수호자·적 부족 안내문. 돌의 가호/전쟁가/불씨는 주문 이름(`spellDef().name`)을 그대로 사용. 도움말 문장은 해요체.
+- `src/ui/editor.ts` 레벨 편집기 전부를 `t('ed.*')`로 번역(키 38개): 도구(올리기·내리기·평탄화·나무·방랑자·선돌·본거지·지우개)와 툴팁, 선돌 종류("가르침"/"2회 대여"), 적 부족 이름(붉은/황금/보라 적 부족), 입력란 자리표시자(레벨 이름/작성자), 저장·코드 복사·테스트·나가기, 상태 메시지, 기본 레벨 이름 "이름 없는 행성"·작성자 "익명의 신", 코드 복사 실패 시 `prompt`는 보관함과 같은 `lib.copyprompt`. 사용자가 저장한 레벨 이름은 데이터라 그대로.
+- `src/ui/level-library.ts` 기본 작성자 "Tribal Gods"는 `lib.author.default`("트라이벌 갓즈"). 조사는 `josa()`(영어에서는 빈 문자열), 지역 변수 `t`가 `t()`를 가리지 않도록 이름 변경.
+- `tools/check-i18n.mjs`: selection-panel.ts와 editor.ts의 문자열 리터럴(CSS·클래스 이름·셀렉터 제외)을 TypeScript AST로 훑어 `t()`를 거치지 않은 영어가 남으면 실패.
+- 그대로 둔 것(플레이어에게 보이지 않음): `hotkeys.ts`의 그룹 이름('Camera' 등)은 내부 식별자이며 도움말 화면에서 `t('hk.group.*')`로 번역됨; `level-library.ts`의 `<select>` 값(보이는 글자는 번역됨)은 내부 값; `main.ts`의 `console.warn` 두 줄은 개발자 콘솔 전용.
+- 빌드·검사: `tsc --noEmit`·`vite build`·`check-i18n.mjs` 통과, 테스트 44개 파일 통과(3개 건너뜀 — jsdom 필요), `group-move`의 "60 warriors" 타이밍 항목만 이 샌드박스에서 실패(무관).
+- 배포(T2d): 소스 커밋 4개(src/ui·src·tools·docs/assets)+docs(index/ui-preview)+옛 파일 3개 삭제. 사이트 전 파일 200, 삭제한 3개는 404, `ui-preview.html` 로드 확인, 배포된 번들이 로컬 dist와 바이트 단위로 같고 `sp.*`/`ed.*` 한국어 항목과 호출이 번들에 있음. 실제 WebGL 게임은 열지 않았습니다.
+
+## 남은 영어 (T2d 마지막 점검: `node tools/list-strings.mjs`)
+플레이어에게 보이는 영어는 없습니다. 남은 것은 모두 개발자 전용/내부 값입니다:
+- `src/ui/debug-overlay.ts`(F3 디버그 표시, 숨김), `src/main.ts`의 `console.warn` 두 줄, `hotkeys.ts` 그룹 식별자와 키 이름(Esc/Space/Ctrl/Shift/Del — 키 표기).
+- `src/ui/level-library.ts` `<select>`의 내부 값(Newest/Name/Rating/Official …), `src/ui/menu.ts`의 "English" 언어 이름·"Tribal Gods" 제목 글자(고유명).
+- 시뮬레이션 원문: `src/sim/*`(rules/objectives/world-state/catalog)·`src/config.ts`·`src/level/campaign/c01~c10`·`src/campaign/boons.ts`·`src/level/official-levels.ts`의 영어는 헤드리스 원문이며 `tx()`/`localizeCatalog()`/사전이 화면에서 번역합니다(누락 아님).
 - 코드 문자열 오탐: CSS, SVG, DOM 클래스, 렌더/지형/자산 파일.
 
 ## 테스트 메모
@@ -53,7 +59,7 @@
 ## 배포 (중요)
 - 이 저장소에서는 GitHub Actions가 한 번도 실행되지 않습니다(Actions 탭: "not currently enabled", 정책을 껐다 켜도 동일). `deploy.yml`은 그대로 두었습니다.
 - 그래서 Pages는 **main 브랜치 /docs**에서 배포합니다. 갱신 절차: `tsc --noEmit && vite build` → `dist/index.html`, `dist/ui-preview.html`을 `docs/`에, `dist/assets/*`를 `docs/assets/`에 복사(옛 해시 파일은 삭제) → 웹 업로더로 폴더별 커밋.
-- 정리 대기 중인 옛 빌드 파일(docs/assets, 현재 index.html이 참조하지 않음) — 웹 UI는 삭제가 파일당 커밋 하나라 한 번에 최대 3개씩 지웁니다. T2c에서 `main-8e6a5304.js`·`menu-2426f15f.js`·`uipreview-348b336c.js`를 삭제했고, T2c 빌드로 새로 옛 파일이 된 것: `main-cfa366fd.js`, `menu-4b634f6c.js`, `uipreview-cbe8af7c.js`, `gallery-4ac27484.js`, `heightmap-5e351e19.js`, `official-levels-30825e2a.js`, `unit-renderer-1dcf015d.js`, `world-state-f6d43ca7.js`(다음 차례에 3개씩 삭제). T2b에서 `main-17a16cf1`·`menu-fd6e1b0f`·`uipreview-fa9937a5`는 삭제했습니다.
+- 정리 대기 중인 옛 빌드 파일(docs/assets, 현재 index.html이 참조하지 않음) — 웹 UI는 삭제가 파일당 커밋 하나라 한 번에 최대 3개씩 지웁니다. 지금까지 삭제: T2b main-17a16cf1·menu-fd6e1b0f·uipreview-fa9937a5, T2c main-8e6a5304·menu-2426f15f·uipreview-348b336c, T2d main-cfa366fd·menu-4b634f6c·uipreview-cbe8af7c. 현재 남은 옛 파일(다음 차례에 3개씩 삭제): `gallery-4ac27484.js`, `heightmap-5e351e19.js`, `official-levels-30825e2a.js`, `unit-renderer-1dcf015d.js`, `world-state-f6d43ca7.js`(T2c 빌드), 그리고 T2d 빌드로 새로 옛 파일이 된 `main-e6553d46.js`, `menu-7d6bb0b9.js`, `uipreview-1721b74d.js`, `gallery-558af3e2.js`, `heightmap-02d70116.js`, `official-levels-bcbfbcdf.js`, `unit-renderer-1458c4ea.js`, `world-state-d956a088.js`. (현재 빌드: main-b16fdde0, menu-09f621d3, uipreview-e90bc45a, gallery-ce58b423, heightmap-605bb05b, official-levels-40278b17, unit-renderer-f00e67ef, world-state-52c985c8; three-*와 menu-f99f8bff.css는 변함없음.)
 - 커밋 대화상자(삭제·웹 편집기)는 영어 메시지가 미리 채워져 있으니 지우고 한국어 접두어(게임: / 문서: )로 바꾸고, 설명란이 비어 있는지 커밋 직전에 확인하세요.
 - 웹 업로더가 파일명을 소문자로 바꾸므로 `vite.config.ts`에서 해시를 16진(`hashCharacters: 'hex'`)으로 고정했습니다. 청크 이름은 소문자만 쓸 것.
 - 웹 업로더는 파일명을 소문자로 바꾸고 앞의 `_`도 떼어 냅니다(`_ext.mjs`→`ext.mjs`). 그래서 `README.md`/`NOTES.md`는 업로드하지 말고 웹 편집기로 수정하세요(대소문자 유지). 업로드는 커밋당 폴더 하나.
