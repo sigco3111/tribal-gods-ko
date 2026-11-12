@@ -21,6 +21,7 @@ import { labelFor } from './hotkeys';
 import { icon } from './icons';
 import { carve } from './lettering';
 import { tip } from './tooltip';
+import { t } from '../i18n';
 
 css('top-bar', `
 .tb-left { position: absolute; top: var(--edge); left: var(--edge); display: flex; align-items: stretch; padding: 0.1rem 0.15rem; gap: 0; }
@@ -78,10 +79,10 @@ export class TopBar {
       return el;
     };
 
-    const wood = stat('wood', 'wood', 'wood', 'wood');
-    tip(wood, () => `<h4>Wood</h4><p>Villagers fell trees and haul the logs home. Buildings, training and growing dwellings all cost wood.</p>`);
+    const wood = stat('wood', 'wood', 'wood', t('hud.l.wood'));
+    tip(wood, () => `<h4>${t('hud.wood.n')}</h4><p>${t('hud.wood.d')}</p>`);
 
-    const pop = stat('pop', 'population', 'pop', 'housed');
+    const pop = stat('pop', 'population', 'pop', t('hud.l.housed'));
     this.idleBtn = h('button.tb-idle.tg-hit', { type: 'button', html: icon('idle', 14) + '<span>0</span>' });
     this.idleBtn.addEventListener('click', () => ctx.actions.nextIdleVillager());
     this.v.popL.textContent = '';
@@ -89,25 +90,25 @@ export class TopBar {
     this.v.popL.append(this.v.housed, this.idleBtn);
     tip(pop, () => {
       const s = ctx.world.tribeSummary('player');
-      return `<h4>Population</h4><p>${s.population} people of a possible ${s.popCap}. ${s.housed} live in dwellings, which breed new villagers and feed your mana.</p>` +
-        `<p class="hint">Build more Dwellings to raise the cap.</p>`;
+      return `<h4>${t('hud.pop.n')}</h4><p>${t('hud.pop.d', { pop: s.population, cap: s.popCap, housed: s.housed })}</p>` +
+        `<p class="hint">${t('hud.pop.hint')}</p>`;
     });
-    tip(this.idleBtn, () => `<h4>Idle villagers <span class="kbd">${labelFor('idle-villager')}</span></h4><p>Click to jump to the next villager with nothing to do.</p>`);
+    tip(this.idleBtn, () => `<h4>${t('hud.idle.n')} <span class="kbd">${labelFor('idle-villager')}</span></h4><p>${t('hud.idle.d')}</p>`);
 
-    const mana = stat('mana', 'mana', 'mana', 'mana');
+    const mana = stat('mana', 'mana', 'mana', t('hud.l.mana'));
     tip(mana, () => {
-      const t = ctx.world.tribes.player;
-      return `<h4>Mana</h4><p>Your people's faith, flowing into every spell that is charging. More people, more homes and more prayer mean faster charges.</p>` +
-        (t && t.manaRate === 0 && t.income > 0 ? `<p class="why">Nothing is charging — mana is going to waste.</p>` : '');
+      const tr = ctx.world.tribes.player;
+      return `<h4>${t('hud.mana.n')}</h4><p>${t('hud.mana.d')}</p>` +
+        (tr && tr.manaRate === 0 && tr.income > 0 ? `<p class="why">${t('hud.mana.why')}</p>` : '');
     });
 
-    this.prayStat = stat('pray', 'prayer', 'pray', 'praying');
-    tip(this.prayStat, () => `<h4>Praying</h4><p>Villagers inside a Shrine pray instead of working. Each one speeds every charging spell.</p>`);
+    this.prayStat = stat('pray', 'prayer', 'pray', t('hud.l.pray'));
+    tip(this.prayStat, () => `<h4>${t('hud.pray.n')}</h4><p>${t('hud.pray.d')}</p>`);
 
-    this.leaderStat = stat('leader', 'leader', 'leader', 'leader', 'button') as HTMLButtonElement;
+    this.leaderStat = stat('leader', 'leader', 'leader', t('hud.l.leader'), 'button') as HTMLButtonElement;
     this.leaderStat.classList.add('tg-hit');
     this.leaderStat.addEventListener('click', () => ctx.actions.centreOnLeader());
-    tip(this.leaderStat, () => `<h4>Your leader <span class="kbd">${labelFor('centre-leader')}</span></h4><p>Casts every spell. If they fall, they return to the home circle while your tribe lives.</p><p class="hint">Click to look at them.</p>`);
+    tip(this.leaderStat, () => `<h4>${t('hud.leader.n')} <span class="kbd">${labelFor('centre-leader')}</span></h4><p>${t('hud.leader.d')}</p><p class="hint">${t('hud.leader.hint')}</p>`);
     parent.appendChild(left);
 
     // --- Right cluster: clock, speed, menu ---
@@ -115,26 +116,26 @@ export class TopBar {
     const clock = h('div.tb-clock', { html: icon('clock', 16) });
     this.v.clock = h('span');
     clock.appendChild(this.v.clock);
-    tip(clock, () => `<h4>Time</h4><p>How long this scenario has been running.</p>`);
+    tip(clock, () => `<h4>${t('hud.time.n')}</h4><p>${t('hud.time.d')}</p>`);
     const speed = h('div.tb-speed');
-    this.pauseBtn = h('button.tg-btn', { type: 'button', 'aria-label': 'Pause', html: icon('pause', 16) });
+    this.pauseBtn = h('button.tg-btn', { type: 'button', 'aria-label': t('hud.pause'), html: icon('pause', 16) });
     this.pauseBtn.addEventListener('click', () => ctx.actions.togglePause());
-    tip(this.pauseBtn, () => `<h4>${appState.paused ? 'Resume' : 'Pause'} <span class="kbd">${labelFor('pause')}</span></h4><p>Time stops; you can still look around, select and plan.</p>`);
+    tip(this.pauseBtn, () => `<h4>${appState.paused ? t('hud.resume') : t('hud.pause')} <span class="kbd">${labelFor('pause')}</span></h4><p>${t('hud.pause.d')}</p>`);
     speed.appendChild(this.pauseBtn);
     for (const n of SPEEDS) {
-      const b = h('button.tg-btn', { type: 'button', text: `${n}×`, 'aria-label': `Speed ${n}×` });
+      const b = h('button.tg-btn', { type: 'button', text: `${n}×`, 'aria-label': t('hud.speed', { n }) });
       b.addEventListener('click', () => ctx.actions.setSpeed(n));
-      tip(b, () => `<h4>Speed ${n}× <span class="kbd">${labelFor('speed-down')}</span><span class="kbd">${labelFor('speed-up')}</span></h4><p>${n === 1 ? 'Normal pace.' : `Time runs ${n} times as fast.`}</p>`);
+      tip(b, () => `<h4>${t('hud.speed', { n })} <span class="kbd">${labelFor('speed-down')}</span><span class="kbd">${labelFor('speed-up')}</span></h4><p>${n === 1 ? t('hud.speed.1') : t('hud.speed.n', { n })}</p>`);
       speed.appendChild(b);
       this.speedBtns.push(b);
     }
-    const menu = h('button.tg-btn.icon-only', { type: 'button', 'aria-label': 'Menu', html: icon('menu', 18) });
+    const menu = h('button.tg-btn.icon-only', { type: 'button', 'aria-label': t('hud.menu'), html: icon('menu', 18) });
     menu.addEventListener('click', () => ctx.actions.openMenu());
-    tip(menu, () => `<h4>Menu <span class="kbd">Esc</span></h4><p>Settings, how to play, restart, leave.</p>`);
+    tip(menu, () => `<h4>${t('hud.menu')} <span class="kbd">Esc</span></h4><p>${t('hud.menu.d')}</p>`);
     right.append(clock, speed, menu);
     parent.appendChild(right);
 
-    this.pausedBanner = h('div.tb-paused.tg-panel.mat-hide.passthrough', { html: carve('Paused') });
+    this.pausedBanner = h('div.tb-paused.tg-panel.mat-hide.passthrough', { html: carve(t('menu.paused')) });
     this.pausedBanner.hidden = true;
     parent.appendChild(this.pausedBanner);
   }
@@ -144,18 +145,18 @@ export class TopBar {
     const s = w.tribeSummary('player');
     setText(this.v.wood, String(s.wood));
     setText(this.v.pop, `${s.population}/${s.popCap}`);
-    setText(this.v.housed, `${s.housed} housed`);
+    setText(this.v.housed, t('hud.housed', { n: s.housed }));
     setText(this.idleBtn.lastElementChild!, String(s.idleVillagers));
     setClass(this.idleBtn, 'has', s.idleVillagers > 0);
     setText(this.v.mana, fmtRate(w.tribes.player?.income ?? s.manaRate));
     // Idle mana is only a problem when something could be filling: all full is good news.
     const idle = s.manaRate === 0 && (w.tribes.player?.income ?? 0) > 0;
     const allFull = SPELLS.every((d) => { const st = w.spellState('player', d.id); return !st.known || st.charges >= st.max; });
-    setText(this.v.manaL, !idle ? 'mana' : allFull ? 'spells full' : 'nothing charging');
+    setText(this.v.manaL, !idle ? t('hud.l.mana') : allFull ? t('hud.l.full') : t('hud.l.idle'));
     setText(this.v.pray, String(s.praying));
     setClass(this.prayStat, 'dim', s.praying === 0);
-    setText(this.v.leader, s.leaderAlive ? 'Alive' : s.leaderRespawn > 0 ? fmtEta(s.leaderRespawn) : 'Lost');
-    setText(this.v.leaderL, s.leaderAlive ? 'leader' : s.leaderRespawn > 0 ? 'returning in' : 'leader');
+    setText(this.v.leader, s.leaderAlive ? t('hud.alive') : s.leaderRespawn > 0 ? fmtEta(s.leaderRespawn) : t('hud.lost'));
+    setText(this.v.leaderL, s.leaderAlive ? t('hud.l.leader') : s.leaderRespawn > 0 ? t('hud.returning') : t('hud.l.leader'));
     setClass(this.leaderStat, 'down', !s.leaderAlive);
     setText(this.v.clock, fmtClock(w.elapsed));
     setClass(this.pauseBtn, 'on', appState.paused);

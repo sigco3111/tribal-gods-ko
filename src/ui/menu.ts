@@ -32,6 +32,7 @@ import { helpHtml } from './help';
 import { icon, UiIconName } from './icons';
 import { carve } from './lettering';
 import { settingsPanel, SettingsHooks } from './settings-panel';
+import { getLang, setLang, t } from '../i18n';
 
 css('menu', `
 .menu { position: fixed; inset: 0; z-index: 30; display: flex; color: var(--text); pointer-events: auto;
@@ -50,6 +51,7 @@ css('menu', `
 .menu-nav .tg-btn.primary svg { color: #3a1f06; filter: none; }
 .menu-nav .tg-btn .soon { margin-left: auto; font-size: var(--t-xs); color: var(--bone-3); font-weight: 600; }
 .menu-nav .tg-btn.primary .soon { color: #3a1f06; opacity: 0.85; }
+.menu-credit { max-width: 24rem; font-size: var(--t-xs); line-height: 1.45; color: var(--bone-3); opacity: 0.85; text-shadow: 0 1px 2px #000; margin-top: -1rem; }
 .menu-foot { font-size: var(--t-xs); color: var(--bone-3); font-weight: 600; text-shadow: 0 1px 2px #000; }
 .menu-card { width: min(60rem, calc(100vw - 2rem)); max-height: calc(100vh - 3rem); display: flex; flex-direction: column; box-sizing: border-box; }
 .menu-card > header { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 1.1rem 0.6rem; border-bottom: 2px solid rgba(70,40,15,0.3); }
@@ -178,8 +180,8 @@ export class Menu {
     const el =
       this.screen === 'title' ? this.titleScreen()
       : this.screen === 'skirmish' ? this.skirmishScreen()
-      : this.screen === 'settings' ? this.card('Settings', settingsPanel(this.settingsHooks), () => this.show(this.backTo))
-      : this.screen === 'help' ? this.card('How to play', h('div', { html: helpHtml() }), () => this.show(this.backTo))
+      : this.screen === 'settings' ? this.card(t('menu.settings'), settingsPanel(this.settingsHooks), () => this.show(this.backTo))
+      : this.screen === 'help' ? this.card(t('menu.help'), h('div', { html: helpHtml() }), () => this.show(this.backTo))
       : this.pauseScreen();
     this.overlay.replaceChildren(el);
     el.querySelector<HTMLElement>('.tg-btn.primary, .tg-btn')?.focus({ preventScroll: true });
@@ -196,24 +198,26 @@ export class Menu {
   private titleScreen(): HTMLElement {
     this.backTo = 'title';
     const saved = this.onContinue ? this.continueLabel() : null;
-    const nav = h('nav.menu-nav', { 'aria-label': 'Main menu' },
-      saved ? this.navBtn('Continue', 'play', () => { this.hide(); this.onContinue!(); }, true, saved) : null,
-      this.navBtn('Campaign', 'objective', this.onCampaign ? () => { this.hide(); this.onCampaign!(); } : null, !saved && !!this.onCampaign, this.onCampaign ? '' : 'coming soon'),
-      this.navBtn('Skirmish', 'attack', () => this.show('skirmish'), !this.onCampaign),
-      this.navBtn('Levels', 'book', () => { this.hide(); this.onLevels?.(); }),
-      this.navBtn('Editor', 'hammer', () => { this.hide(); this.onEditor?.(); }),
-      this.navBtn('Settings', 'settings', () => this.show('settings')),
-      this.navBtn('How to play', 'info', () => this.show('help')),
+    const nav = h('nav.menu-nav', { 'aria-label': t('menu.mainmenu') },
+      saved ? this.navBtn(t('menu.continue'), 'play', () => { this.hide(); this.onContinue!(); }, true, saved) : null,
+      this.navBtn(t('menu.campaign'), 'objective', this.onCampaign ? () => { this.hide(); this.onCampaign!(); } : null, !saved && !!this.onCampaign, this.onCampaign ? '' : t('menu.soon')),
+      this.navBtn(t('menu.skirmish'), 'attack', () => this.show('skirmish'), !this.onCampaign),
+      this.navBtn(t('menu.levels'), 'book', () => { this.hide(); this.onLevels?.(); }),
+      this.navBtn(t('menu.editor'), 'hammer', () => { this.hide(); this.onEditor?.(); }),
+      this.navBtn(t('menu.settings'), 'settings', () => this.show('settings')),
+      this.navBtn(t('menu.help'), 'info', () => this.show('help')),
+      this.navBtn(t('menu.lang', { lang: getLang() === 'ko' ? '한국어' : 'English' }), 'eye', () => { setLang(getLang() === 'ko' ? 'en' : 'ko'); location.reload(); }),
     );
     return h('div.menu-title', {},
-      h('div.menu-logo', { html: `<h1>${carve('Tribal')}${carve('Gods')}</h1><div class="rule cloth"></div><p>A small round world, a tribe that grows, and a leader who speaks with the sky.</p>` }),
+      h('div.menu-logo', { html: `<h1>${carve('Tribal')}${carve('Gods')}</h1><div class="rule cloth"></div><p>${t('menu.tagline')}</p>` }),
       nav,
-      h('div.menu-foot', { text: 'F1 how to play · Esc back' }),
+      h('div.menu-foot', { text: t('menu.foot') }),
+      h('div.menu-credit', { text: t('menu.credit') }),
     );
   }
 
   private card(title: string, body: HTMLElement, onBack: () => void, footer: HTMLElement[] = []): HTMLElement {
-    const back = h('button.tg-btn.icon-only', { type: 'button', 'aria-label': 'Back', html: `<span style="display:inline-flex;transform:scaleX(-1)">${icon('arrowRight', 18)}</span>` });
+    const back = h('button.tg-btn.icon-only', { type: 'button', 'aria-label': t('menu.back'), html: `<span style="display:inline-flex;transform:scaleX(-1)">${icon('arrowRight', 18)}</span>` });
     back.addEventListener('click', onBack);
     const head = h('header', {}, back, h('h2', { html: carve(title) }), h('span.grow'));
     const card = h('div.menu-card.tg-panel.mat-hide', {}, head, h('div.body', {}, body));
@@ -233,7 +237,7 @@ export class Menu {
       const b = h('button.sk-civ', { type: 'button', role: 'radio', style: `--ac:${ac}` },
         h('span.crest', { html: icon('leader', 26) }),
         h('b', { text: civ.name }),
-        h('span.lead', { text: `led by ${civ.leaderTitle}` }),
+        h('span.lead', { text: t('menu.ledby', { title: civ.leaderTitle }) }),
         h('p', { text: civ.blurb }),
       );
       b.dataset.civ = civ.id;
@@ -244,7 +248,7 @@ export class Menu {
       civs.appendChild(b);
     }
     paint();
-    body.appendChild(h('section', {}, h('h3', { text: 'Your people' }), civs));
+    body.appendChild(h('section', {}, h('h3', { text: t('menu.yourpeople') }), civs));
 
     // Difficulty + rivals
     const diffDesc = h('div.seg-desc');
@@ -254,7 +258,7 @@ export class Menu {
       diffDesc.textContent = DIFFICULTIES[this.difficulty].label;
     };
     for (const id of Object.keys(DIFFICULTIES) as Difficulty[]) {
-      const b = h('button.tg-btn', { type: 'button', role: 'radio', text: id[0].toUpperCase() + id.slice(1) });
+      const b = h('button.tg-btn', { type: 'button', role: 'radio', text: t(`diff.${id}.name`) });
       b.dataset.v = id;
       b.addEventListener('click', () => {
         this.difficulty = id;
@@ -268,7 +272,7 @@ export class Menu {
     const rivals = h('div.seg', { role: 'radiogroup' });
     const paintRivals = () => {
       for (const b of rivals.children) b.classList.toggle('on', Number((b as HTMLElement).dataset.v) === this.enemies);
-      rivalsDesc.textContent = this.enemies === 1 ? 'One planet, two gods.' : `One planet, ${this.enemies + 1} gods — they fight each other too.`;
+      rivalsDesc.textContent = this.enemies === 1 ? t('menu.rivals.one') : t('menu.rivals.many', { n: this.enemies + 1 });
     };
     for (let n = 1; n <= 3; n++) {
       const dots = TRIBE_IDS.slice(1, 1 + n).map((t) => `<i style="background:#${TRIBE_COLORS[t].toString(16).padStart(6, '0')}"></i>`).join('');
@@ -282,29 +286,29 @@ export class Menu {
     }
     paintRivals();
     body.appendChild(h('section', {}, h('div.sk-opts', {},
-      h('div', {}, h('h3', { text: 'Difficulty' }), diff, diffDesc),
-      h('div', {}, h('h3', { text: 'Rival tribes' }), rivals, rivalsDesc),
+      h('div', {}, h('h3', { text: t('menu.difficulty') }), diff, diffDesc),
+      h('div', {}, h('h3', { text: t('menu.rivals') }), rivals, rivalsDesc),
     )));
 
-    const start = h('button.tg-btn.primary', { type: 'button', html: `${icon('play', 16)}<span>Begin</span>` });
+    const start = h('button.tg-btn.primary', { type: 'button', html: `${icon('play', 16)}<span>${t('menu.begin')}</span>` });
     start.addEventListener('click', () => {
       this.hide();
       this.onSkirmish?.(this.settings);
     });
-    const card = this.card('Skirmish', body, () => this.show('title'), [start]);
+    const card = this.card(t('menu.skirmish'), body, () => this.show('title'), [start]);
     queueMicrotask(() => start.focus());
     return card;
   }
 
   private pauseScreen(): HTMLElement {
     this.backTo = 'pause';
-    const card = h('div.pause-card.tg-panel.mat-hide', {}, h('h2', { html: carve('Paused') }));
+    const card = h('div.pause-card.tg-panel.mat-hide', {}, h('h2', { html: carve(t('menu.paused')) }));
     card.append(
-      this.navBtn('Resume', 'play', () => this.onResume?.(), true),
-      this.navBtn('Settings', 'settings', () => this.show('settings')),
-      this.navBtn('How to play', 'info', () => this.show('help')),
-      this.navBtn('Restart', 'arrowRight', () => this.onRestart?.()),
-      this.navBtn('Main menu', 'menu', () => this.onQuit?.()),
+      this.navBtn(t('menu.resume'), 'play', () => this.onResume?.(), true),
+      this.navBtn(t('menu.settings'), 'settings', () => this.show('settings')),
+      this.navBtn(t('menu.help'), 'info', () => this.show('help')),
+      this.navBtn(t('menu.restart'), 'arrowRight', () => this.onRestart?.()),
+      this.navBtn(t('menu.mainmenu'), 'menu', () => this.onQuit?.()),
     );
     return card;
   }

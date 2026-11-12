@@ -27,6 +27,7 @@ import { Drape } from './drape';
 import { labelFor } from './hotkeys';
 import { activeBuilding, resetTool } from './tools';
 import { toast } from './tooltip';
+import { t, tx } from '../i18n';
 
 const GOOD = 0x6fe08a;
 const BAD = 0xff5a4a;
@@ -54,7 +55,7 @@ export class BuildPlacer {
       const c = this.candidate;
       if (!c || c.kind !== kind) return;
       if (!c.ok || !ctx.world.placeBuilding('player', kind, c.x, c.z)) {
-        toast(c.why ?? 'Cannot build here', e.clientX, e.clientY);
+        toast(c.why ?? t('bp.cannot'), e.clientX, e.clientY);
         denied();
         return;
       }
@@ -68,18 +69,18 @@ export class BuildPlacer {
   private siteReason(kind: BuildingKind, cx: number, cz: number, badTiles: number, laneBlocked: boolean): string | null {
     const w = this.ctx.world;
     const st = w.buildState('player', kind);
-    if (st.reason) return st.reason;
+    if (st.reason) return tx(st.reason);
     if (w.canPlaceBuilding('player', kind, cx, cz)) return null;
-    if (badTiles > 0) return 'Something is in the way';
-    if (laneBlocked) return 'Keep a path clear around buildings';
+    if (badTiles > 0) return t('bp.inway');
+    if (laneBlocked) return t('bp.path');
     const r = (BUILDINGS[kind].size - 1) / 2;
     for (const id of w.activeTribes()) {
       const home = w.tribes[id]!.home;
       if (Math.abs(wrapDelta(cx - home.x, WORLD_SIZE)) < r + 3 && Math.abs(wrapDelta(cz - home.z, WORLD_SIZE)) < r + 3) {
-        return 'Too close to a home circle';
+        return t('bp.home');
       }
     }
-    return 'The ground is too uneven';
+    return t('bp.uneven');
   }
 
   update(): void {
@@ -132,11 +133,11 @@ export class BuildPlacer {
     // Outline of the whole footprint, green or red as one.
     this.rim.color(ok ? GOOD : BAD);
     const e = r + 0.5;
-    const t = 0.12;
-    this.rim.quad(view, cx - e, cz - e, cx + e, cz - e, cx + e, cz - e + t, cx - e, cz - e + t);
-    this.rim.quad(view, cx - e, cz + e - t, cx + e, cz + e - t, cx + e, cz + e, cx - e, cz + e);
-    this.rim.quad(view, cx - e, cz - e, cx - e + t, cz - e, cx - e + t, cz + e, cx - e, cz + e);
-    this.rim.quad(view, cx + e - t, cz - e, cx + e, cz - e, cx + e, cz + e, cx + e - t, cz + e);
+    const th = 0.12;
+    this.rim.quad(view, cx - e, cz - e, cx + e, cz - e, cx + e, cz - e + th, cx - e, cz - e + th);
+    this.rim.quad(view, cx - e, cz + e - th, cx + e, cz + e - th, cx + e, cz + e, cx - e, cz + e);
+    this.rim.quad(view, cx - e, cz - e, cx - e + th, cz - e, cx - e + th, cz + e, cx - e, cz + e);
+    this.rim.quad(view, cx + e - th, cz - e, cx + e, cz - e, cx + e, cz + e, cx + e - th, cz + e);
     // The door (bottom-centre tile stays open in the sim): a small mark.
     this.rim.ring(view, cx, cz + r + 0.3, 0.06, 0.16);
     this.fill.end();
@@ -147,6 +148,6 @@ export class BuildPlacer {
     this.note.style.left = `${ptr.x}px`;
     this.note.style.top = `${ptr.y}px`;
     setClass(this.note, 'bad', !ok);
-    setText(this.note, ok ? `${def.name} · ${def.wood} wood · click to place, shift for more  ${labelFor(`build:${kind}`)}` : why!);
+    setText(this.note, ok ? `${t('bp.note', { name: def.name, n: def.wood })}  ${labelFor(`build:${kind}`)}` : why!);
   }
 }

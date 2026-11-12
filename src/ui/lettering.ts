@@ -119,6 +119,11 @@ export function letterPath(text: string): { d: string; width: number } {
  * = 1em, so size it with font-size), plus the text for readers.
  */
 export function carve(text: string, cls = ''): string {
+  // The carved alphabet is Latin only: anything else (Korean) is set as bold painted type with the same cut / edge shadow.
+  if (/[^\u0000-\u024F\u2018\u2019\u00D7·–—]/.test(text)) {
+    const esc = text.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
+    return `<span class="carve carve-text${cls ? ` ${cls}` : ''}">${esc}</span>`;
+  }
   const { d, width } = letterPath(text);
   const pad = 1.6;
   const vbW = width + pad * 2;

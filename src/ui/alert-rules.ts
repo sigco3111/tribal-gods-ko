@@ -12,6 +12,7 @@
  */
 
 import { BuildingKind, DWELLING_TIERS, BUILDINGS, spellDef, SpellId } from '../sim/catalog';
+import { josa, t, tx } from '../i18n';
 
 export interface Snapshot {
   /** Sim seconds. */
@@ -82,36 +83,36 @@ export function deriveAlerts(a: Snapshot, b: Snapshot, mem: AlertMemory): Alert[
     mem.attacks = mem.attacks.filter((p) => b.t - p.t < ATTACK_COOLDOWN);
     if (!mem.attacks.some((p) => near(p.x, p.z, hit!.x, hit!.z, ATTACK_AREA))) {
       mem.attacks.push({ ...hit, t: b.t });
-      out.push({ kind: 'attack', text: 'Your people are under attack', tone: 'bad', ...hit });
+      out.push({ kind: 'attack', text: t('al.attack'), tone: 'bad', ...hit });
     }
   }
 
   // --- Leader ---
-  if (a.leaderAlive && !b.leaderAlive) out.push({ kind: 'leaderDown', text: 'Your leader has fallen', tone: 'bad' });
-  if (!a.leaderAlive && b.leaderAlive) out.push({ kind: 'leaderBack', text: 'Your leader has returned', tone: 'good' });
+  if (a.leaderAlive && !b.leaderAlive) out.push({ kind: 'leaderDown', text: t('al.leaderdown'), tone: 'bad' });
+  if (!a.leaderAlive && b.leaderAlive) out.push({ kind: 'leaderBack', text: t('al.leaderback'), tone: 'good' });
 
   // --- Spells learned / gifted ---
   for (const id of b.known) {
-    if (!a.known.includes(id)) out.push({ kind: 'learned', text: `Learned ${spellDef(id).name}`, tone: 'good' });
+    if (!a.known.includes(id)) out.push({ kind: 'learned', text: t('al.learned', { spell: spellDef(id).name }), tone: 'good' });
   }
   for (const [id, n] of Object.entries(b.gifted) as Array<[SpellId, number]>) {
     const was = a.gifted[id] ?? 0;
-    if (n > was) out.push({ kind: 'gift', text: `A stone lends you ${n - was}× ${spellDef(id).name}`, tone: 'good' });
+    if (n > was) out.push({ kind: 'gift', text: t('al.gift', { n: n - was, spell: spellDef(id).name }), tone: 'good' });
   }
 
   // --- Buildings ---
   for (const [id, bl] of b.buildings) {
     const was = a.buildings.get(id);
     if (!was) continue;
-    if (bl.done && !was.done) out.push({ kind: 'built', text: `${BUILDINGS[bl.kind].name} finished`, tone: 'info', x: bl.x, z: bl.z });
+    if (bl.done && !was.done) out.push({ kind: 'built', text: t('al.built', { name: BUILDINGS[bl.kind].name }), tone: 'info', x: bl.x, z: bl.z });
     if (bl.kind === 'hut' && bl.tier > was.tier) {
-      out.push({ kind: 'grew', text: `A dwelling grew into a ${DWELLING_TIERS[Math.min(2, bl.tier)].name}`, tone: 'good', x: bl.x, z: bl.z });
+      out.push({ kind: 'grew', text: t('al.grew', { name: DWELLING_TIERS[Math.min(2, bl.tier)].name }), tone: 'good', x: bl.x, z: bl.z });
     }
-    if (bl.burning && !was.burning) out.push({ kind: 'burning', text: `${BUILDINGS[bl.kind].name} is burning`, tone: 'bad', x: bl.x, z: bl.z });
+    if (bl.burning && !was.burning) out.push({ kind: 'burning', text: t('al.burning', { name: BUILDINGS[bl.kind].name }), tone: 'bad', x: bl.x, z: bl.z });
   }
   for (const [id, was] of a.buildings) {
     if (!b.buildings.has(id) && was.done) {
-      out.push({ kind: 'lost', text: `${BUILDINGS[was.kind].name} lost`, tone: 'bad', x: was.x, z: was.z });
+      out.push({ kind: 'lost', text: t('al.lost', { name: BUILDINGS[was.kind].name }), tone: 'bad', x: was.x, z: was.z });
     }
   }
 
@@ -122,14 +123,14 @@ export function deriveAlerts(a: Snapshot, b: Snapshot, mem: AlertMemory): Alert[
     if (r.tribe === 'player' || ra.some((x) => x.index === r.index && x.tribe === r.tribe)) continue;
     const name = spellDef(r.spell).name;
     const who = r.who.charAt(0).toUpperCase() + r.who.slice(1);
-    out.push({ kind: 'ritual', text: `${who} ${r.who.startsWith('the ') ? 'are' : 'is'} communing at the ${name} stone`, tone: 'bad', x: r.x, z: r.z });
+    out.push({ kind: 'ritual', text: t('al.ritual', { who, be: r.who.startsWith('the ') ? 'are' : 'is', spell: name, p: josa(who, '이/가') }), tone: 'bad', x: r.x, z: r.z });
   }
   // (Your OWN ritual breaking is the sim's 'communeInterrupted' event — see ritualBrokenAlert —
   // because a diff can't tell a broken ritual from a finished one at a stone whose spell you knew.)
 
   // --- Objectives ---
   b.objectives.forEach((o, i) => {
-    if (o.done && a.objectives[i] && !a.objectives[i].done) out.push({ kind: 'objective', text: `Objective complete: ${o.text}`, tone: 'good' });
+    if (o.done && a.objectives[i] && !a.objectives[i].done) out.push({ kind: 'objective', text: t('al.objective', { text: tx(o.text) }), tone: 'good' });
   });
 
   return out;
@@ -138,9 +139,8 @@ export function deriveAlerts(a: Snapshot, b: Snapshot, mem: AlertMemory): Alert[
 /** The alert for the sim's `communeInterrupted` event when it is the player's ritual (else null). */
 export function ritualBrokenAlert(e: { type: string; tribe?: string; x: number; z: number; magnitude?: number }, spell: SpellId | null): Alert | null {
   if (e.type !== 'communeInterrupted' || e.tribe !== 'player') return null;
-  const pct = e.magnitude !== undefined ? ` at ${Math.round(e.magnitude * 100)}%` : '';
-  const where = spell ? ` at the ${spellDef(spell).name} stone` : '';
-  return { kind: 'ritualBroken', text: `Your leader's ritual${where} was broken${pct}`, tone: 'bad', x: e.x, z: e.z };
+  const pct = e.magnitude !== undefined ? ' ' + t('al.atpct', { n: Math.round(e.magnitude * 100) }) : '';
+  return { kind: 'ritualBroken', text: spell ? t('al.ritualbroke.at', { spell: spellDef(spell).name, pct }) : t('al.ritualbroke', { pct }), tone: 'bad', x: e.x, z: e.z };
 }
 
 /** How many casts happened between snapshots (charges + gifts that went down). */

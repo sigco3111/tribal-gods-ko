@@ -112,6 +112,15 @@
   --edge: var(--s3);
 }
 
+/* Korean: system Hangul fonts only (nothing is downloaded); keep-all stops words breaking mid-syllable-run. */
+html:lang(ko) {
+  --font: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", "Optima", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", system-ui, sans-serif;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+html:lang(ko) .tg-btn, html:lang(ko) .tg-tip h4 { letter-spacing: 0; }
+
 html { font-size: calc(16px * var(--ui-scale)); }
 
 body {
@@ -127,6 +136,9 @@ body {
 /* Visually hidden, still read (carved lettering keeps its words here). */
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .carve { display: inline-flex; vertical-align: -0.12em; line-height: 0; }
+/* Hangul headings (the carved alphabet is Latin only): bold painted type with the same groove shadow and edge light. */
+.carve.carve-text { line-height: 1.1; font: 800 1.05em/1.1 var(--font-display); letter-spacing: 0.02em; color: var(--carve-paint, #e8bd6a); vertical-align: baseline;
+  text-shadow: 0.05em 0.08em 0 var(--carve-cut, rgba(20,10,4,0.85)), -0.01em -0.02em 0 var(--carve-edge, rgba(255,240,205,0.45)); }
 .carve svg { overflow: visible; }
 
 /* Everything the UI draws lives in #ui, which never eats world clicks

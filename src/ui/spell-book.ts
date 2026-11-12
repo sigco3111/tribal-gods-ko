@@ -33,8 +33,9 @@ import { icon, spellIcon } from './icons';
 import { carve } from './lettering';
 import { activeSpell } from './tools';
 import { tip, toast } from './tooltip';
+import { josa, t, tx } from '../i18n';
 
-const TIER_NAMES = ['', 'Everyday', 'Battle', 'World-shaping'];
+const tierName = (tier: number) => t(`sb.tier.${tier}`);
 const ROMAN = ['', 'I', 'II', 'III'];
 
 css('spell-book', `
@@ -116,12 +117,12 @@ export class SpellBook {
   constructor(private readonly ctx: UiContext) {
     this.el = h('div.sb.tg-panel.mat-stone');
     this.flow = h('span.flow');
-    this.el.appendChild(h('div.tg-panel-head', { html: `${carve('Spells')}<span class="cloth" style="flex:1"></span>` }, this.flow));
+    this.el.appendChild(h('div.tg-panel-head', { html: `${carve(t('sb.title'))}<span class="cloth" style="flex:1"></span>` }, this.flow));
 
     for (const tier of [1, 2, 3] as const) {
       const row = h('div.sb-row');
       const label = h('div.sb-tier', { html: carve(ROMAN[tier]) });
-      tip(label, () => `<h4>Tier ${ROMAN[tier]} · ${TIER_NAMES[tier]}</h4><p>${tier === 1 ? 'Cheap, quick to recharge — use them freely.' : tier === 2 ? 'Spells that decide a battle.' : 'Spells that reshape the planet. Plan minutes ahead.'}</p>`);
+      tip(label, () => `<h4>${t('sb.tiertip', { r: ROMAN[tier], name: tierName(tier) })}</h4><p>${t(`sb.tiertip.${tier}`)}</p>`);
       row.appendChild(label);
       for (const def of SPELLS.filter((s) => s.tier === tier)) row.appendChild(this.slot(def));
       this.el.appendChild(row);
@@ -135,7 +136,7 @@ export class SpellBook {
     const pips = h('div.sb-pips');
     const gift = h('div.sb-gift');
     const eta = h('div.sb-eta');
-    const toggle = h('button.sb-toggle', { type: 'button', 'aria-label': `Toggle charging ${def.name}`, html: icon('charging', 11) });
+    const toggle = h('button.sb-toggle', { type: 'button', 'aria-label': t('sb.toggle', { name: def.name }), html: icon('charging', 11) });
     el.prepend(sweep);
     el.append(h('span.kbd', { text: key }), pips, gift, eta, toggle);
     const slot: Slot = { def, el, sweep, pips, gift, eta, lastP: -1, lastCharges: -1, shown: '' };
@@ -176,10 +177,10 @@ export class SpellBook {
       // Not broken, just not ready: say what is happening and when.
       const s = w.spellState('player', id);
       const name = spellDef(id).name;
-      if (!s.charging) return `${name} is not charging — right-click it to pour mana in`;
-      return Number.isFinite(s.eta) ? `${name} is gathering power — ready in ${fmtEta(s.eta)}` : `${name} is gathering power`;
+      if (!s.charging) return t('sb.notcharging.why', { name, p: josa(name, '은/는') });
+      return Number.isFinite(s.eta) ? t('sb.gathering.eta', { name, eta: fmtEta(s.eta) }) : t('sb.gathering', { name });
     }
-    return why;
+    return why ? tx(why) : why;
   }
 
   arm(id: SpellId, el?: HTMLElement): void {
@@ -188,7 +189,7 @@ export class SpellBook {
     if (why) {
       if (slotEl) {
         const r = slotEl.getBoundingClientRect();
-        toast(why, r.left + r.width / 2, r.top, /gathering power|not charging/.test(why) ? 'info' : 'bad');
+        toast(why, r.left + r.width / 2, r.top, /gathering power|not charging|힘이 모이는|충전 중이 아닙니다/.test(why) ? 'info' : 'bad');
         slotEl.classList.remove('deny');
         void slotEl.offsetWidth;
         slotEl.classList.add('deny');
@@ -202,49 +203,49 @@ export class SpellBook {
   private howToLearn(id: SpellId): string {
     const stones = this.ctx.world.monuments.filter((m) => m.spell === id);
     if (stones.some((m) => m.mode === 'teach' && this.ctx.world.monumentAvailable(m))) {
-      return 'Taught by a standing stone. Send your leader to commune with it (select the leader, right-click the stone).';
+      return t('sb.learn.teach');
     }
-    if (stones.some((m) => m.mode === 'gift')) return 'A standing stone lends casts of this spell. Commune with it to borrow them.';
-    if (stones.length > 0) return 'Its stone has already been claimed.';
-    return 'No standing stone on this planet teaches it.';
+    if (stones.some((m) => m.mode === 'gift')) return t('sb.learn.gift');
+    if (stones.length > 0) return t('sb.learn.claimed');
+    return t('sb.learn.none');
   }
 
   private tooltip(def: SpellDef): string {
     const s = this.ctx.world.spellState('player', def.id);
     const key = labelFor(`spell:${def.id}`);
-    const aim = def.aim === 'line' ? 'A line from your leader' : def.aim === 'point' ? 'A point' : 'An area';
+    const aim = def.aim === 'line' ? t('sb.aim.line') : def.aim === 'point' ? t('sb.aim.point') : t('sb.aim.area');
     const charge = !s.known
       ? '—'
       : s.charges >= s.max
-        ? 'Full'
+        ? t('sb.full')
         : !s.charging
-          ? 'Not charging'
-          : `in ${fmtEta(s.eta)}`;
+          ? t('sb.off')
+          : t('sb.in', { eta: fmtEta(s.eta) });
     // The tribe's own numbers: campaign boons and loadouts change both.
     const cost = Math.round(s.chargeMana * 10) / 10;
     const manaLine = cost === def.chargeMana
       ? `${cost}`
-      : `${cost} <span style="color:var(--${cost < def.chargeMana ? 'good' : 'warn'})">(usually ${def.chargeMana})</span>`;
-    const bonus = s.bonusCharges ? ` <span style="color:var(--good)">(+${s.bonusCharges} from boons)</span>` : '';
+      : `${cost} <span style="color:var(--${cost < def.chargeMana ? 'good' : 'warn'})">${t('sb.usually', { n: def.chargeMana })}</span>`;
+    const bonus = s.bonusCharges ? ` <span style="color:var(--good)">${t('sb.boons', { n: s.bonusCharges })}</span>` : '';
     let html =
-      `<div class="sub">Tier ${ROMAN[def.tier]} · ${TIER_NAMES[def.tier]}</div>` +
+      `<div class="sub">${t('sb.tiertip', { r: ROMAN[def.tier], name: tierName(def.tier) })}</div>` +
       `<h4>${escapeHtml(def.name)}<span class="kbd">${key}</span></h4>` +
       `<p>${escapeHtml(def.blurb)}</p><dl class="stats">` +
-      `<dt>Charges</dt><dd>${s.known ? `${s.charges} / ${s.max}` : `holds ${s.max}`}${bonus}${s.gifted ? ` <span style="color:var(--gold)">+${s.gifted} gifted</span>` : ''}</dd>` +
-      `<dt>Next charge</dt><dd>${charge}</dd>` +
-      `<dt>Mana / charge</dt><dd>${manaLine}</dd>` +
-      `<dt>Range</dt><dd>${fmtTiles(def.range)} from your leader</dd>` +
-      (def.radius > 0 ? `<dt>${def.aim === 'line' ? 'Width' : 'Radius'}</dt><dd>${fmtTiles(def.radius)}</dd>` : '') +
-      `<dt>Duration</dt><dd>${def.duration > 0 ? fmtSeconds(def.duration) : 'Instant'}</dd>` +
-      `<dt>Cast time</dt><dd>${fmtSeconds(def.castSeconds)}</dd>` +
-      `<dt>Target</dt><dd>${aim}${def.anywhere ? ', land or water' : ', land only'}</dd></dl>`;
+      `<dt>${t('sb.charges')}</dt><dd>${s.known ? `${s.charges} / ${s.max}` : t('sb.holds', { n: s.max })}${bonus}${s.gifted ? ` <span style="color:var(--gold)">${t('sb.gifted', { n: s.gifted })}</span>` : ''}</dd>` +
+      `<dt>${t('sb.next')}</dt><dd>${charge}</dd>` +
+      `<dt>${t('sb.mana')}</dt><dd>${manaLine}</dd>` +
+      `<dt>${t('sb.range')}</dt><dd>${t('sb.fromleader', { range: fmtTiles(def.range) })}</dd>` +
+      (def.radius > 0 ? `<dt>${def.aim === 'line' ? t('sb.width') : t('sb.radius')}</dt><dd>${fmtTiles(def.radius)}</dd>` : '') +
+      `<dt>${t('sb.duration')}</dt><dd>${def.duration > 0 ? fmtSeconds(def.duration) : t('fmt.instant')}</dd>` +
+      `<dt>${t('sb.cast')}</dt><dd>${fmtSeconds(def.castSeconds)}</dd>` +
+      `<dt>${t('sb.target')}</dt><dd>${aim}${def.anywhere ? t('sb.landwater') : t('sb.landonly')}</dd></dl>`;
     if (!s.known && s.gifted === 0) html += `<div class="note">${escapeHtml(this.howToLearn(def.id))}</div>`;
     else {
       const why = this.blockedReason(def.id);
       // Charging is a state, not a fault: amber note, not a red refusal.
-      if (why) html += `<div class="${/gathering power|not charging/.test(why) ? 'note' : 'why'}">${escapeHtml(why)}</div>`;
-      if (s.known && !s.charging) html += `<div class="note">Not charging — mana goes to your other spells.</div>`;
-      html += `<div class="hint">Click or press ${key}, then click the world. Right-click this slot to ${s.charging ? 'stop' : 'resume'} charging.</div>`;
+      if (why) html += `<div class="${/gathering power|not charging|힘이 모이는|충전 중이 아닙니다/.test(why) ? 'note' : 'why'}">${escapeHtml(why)}</div>`;
+      if (s.known && !s.charging) html += `<div class="note">${t('sb.nocharge.note')}</div>`;
+      html += `<div class="hint">${t(s.charging ? 'sb.hint.stop' : 'sb.hint.resume', { key })}</div>`;
     }
     return html;
   }
@@ -295,6 +296,6 @@ export class SpellBook {
       setClass(slot.el, 'armed', armed === slot.def.id);
       setClass(slot.el, 'blocked', usable && !leaderHere);
     }
-    setText(this.flow, charging > 0 ? `${charging} charging` : 'none charging');
+    setText(this.flow, charging > 0 ? t('sb.flow.n', { n: charging }) : t('sb.flow.0'));
   }
 }

@@ -15,6 +15,7 @@
 import { communeSecondsFor, spellDef, Tribe, tribeName, TribeId, UNITS, UnitKind } from '../sim/catalog';
 import type { Monument, World } from '../sim/world-state';
 import { fmtSeconds } from './format';
+import { getLang, josa, t } from '../i18n';
 
 export interface Ritual {
   tribe: Tribe;
@@ -54,36 +55,36 @@ export function ritualOf(world: World, unitId: number): { index: number; ritual:
 
 /** "Lightning stone" */
 export function stoneName(m: Monument): string {
-  return `${spellDef(m.spell).name} stone`;
+  return t('stone.name', { spell: spellDef(m.spell).name });
 }
 
 /** One line: what it holds and on what terms. */
 export function stoneTerms(m: Monument): string {
   return m.mode === 'teach'
-    ? `Teaches ${spellDef(m.spell).name} for good`
-    : `Lends ${m.charges ?? 2} free cast${(m.charges ?? 2) === 1 ? '' : 's'} of ${spellDef(m.spell).name}`;
+    ? t('stone.teach', { spell: spellDef(m.spell).name })
+    : t('stone.lend', { n: m.charges ?? 2, s: (m.charges ?? 2) === 1 ? '' : 's', spell: spellDef(m.spell).name });
 }
 
 /** The guardians' line for a tooltip, or null when the stone has none. */
 export function stoneGuards(m: Monument): string | null {
   const g = m.guards ? (Object.entries(m.guards) as Array<[UnitKind, number]>).filter(([, n]) => n > 0) : [];
   if (g.length === 0) return null;
-  const who = g.map(([k, n]) => `${n} ${UNITS[k].name}${n === 1 ? '' : 's'}`).join(', ');
-  return m.guardsAwake ? `Guarded — ${who}, awake and fighting!` : `Guarded — ${who} wake when a ritual begins`;
+  const who = g.map(([k, n]) => t('stone.unit', { n, name: UNITS[k].name, s: getLang() === 'en' && n !== 1 ? 's' : '' })).join(', ');
+  return m.guardsAwake ? t('stone.guard.awake', { who }) : t('stone.guard.sleep', { who, p: josa(who, '이/가') });
 }
 
 /** Why the stone can't be communed with now, or null. */
 export function stoneBlocked(world: World, m: Monument): string | null {
   if (world.monumentAvailable(m)) return null;
-  if (m.asleep) return 'Asleep — not yet awake to anyone';
-  if (m.mode === 'teach' && m.claimedBy) return m.claimedBy === 'player' ? 'Your tribe already learned it here' : 'Already claimed';
-  if (m.sleep > 0) return `Sleeping — wakes in ${fmtSeconds(Math.ceil(m.sleep))}`;
-  if (m.opensAt && world.elapsed < m.opensAt) return `Wakes in ${fmtSeconds(Math.ceil(m.opensAt - world.elapsed))}`;
-  return 'Not open now';
+  if (m.asleep) return t('stone.asleep');
+  if (m.mode === 'teach' && m.claimedBy) return m.claimedBy === 'player' ? t('stone.yours') : t('stone.claimed');
+  if (m.sleep > 0) return t('stone.sleeping', { t: fmtSeconds(Math.ceil(m.sleep)) });
+  if (m.opensAt && world.elapsed < m.opensAt) return t('stone.wakes', { t: fmtSeconds(Math.ceil(m.opensAt - world.elapsed)) });
+  return t('stone.closed');
 }
 
 /** Display name for a tribe ("the Ashmark", "your tribe"). */
-export function tribeLabelOf(world: World, t: Tribe): string {
-  if (t === 'wild') return 'wanderers';
-  return tribeName(world.rules, t as TribeId);
+export function tribeLabelOf(world: World, tribe: Tribe): string {
+  if (tribe === 'wild') return t('tribe.wild');
+  return tribeName(world.rules, tribe as TribeId);
 }

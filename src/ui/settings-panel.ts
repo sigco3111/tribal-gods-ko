@@ -10,6 +10,7 @@
 import { getVolume, isMuted, setMuted, setVolume, uiClick } from '../core/audio';
 import { css, h } from './dom';
 import { applyUiScale, QualitySetting, saveSettings, setQuality, settings } from './settings';
+import { getLang, Lang, setLang, t } from '../i18n';
 
 css('settings-panel', `
 .set { display: grid; gap: 1.05rem; }
@@ -78,11 +79,24 @@ export function settingsPanel(hooks: SettingsHooks): HTMLDivElement {
   const row = (name: string, control: HTMLElement, desc: string) =>
     root.append(h('div.set-row', {}, h('div.name', { text: name }), control, h('div.desc', { text: desc })));
 
+  // Language: stored in localStorage; the page reloads to rebuild the HUD (in a running game the change waits for the next load).
+  const langNote = h('div.set-note');
+  langNote.hidden = true;
+  row(t('set.language'), seg<string>([['ko', '한국어'], ['en', 'English']], () => getLang(), (v) => {
+    if (v === getLang()) return;
+    setLang(v as Lang);
+    if (hooks.inGame()) {
+      langNote.hidden = false;
+      langNote.textContent = t('set.language.saved');
+    } else location.reload();
+  }), t('set.language.desc'));
+  root.appendChild(langNote);
+
   // Sound: master volume + mute (core/audio.ts remembers both).
   const pct = h('span.pct');
-  const slider = h('input', { type: 'range', min: '0', max: '100', step: '1', 'aria-label': 'Volume' });
+  const slider = h('input', { type: 'range', min: '0', max: '100', step: '1', 'aria-label': t('set.volume') });
   slider.value = String(Math.round(getVolume() * 100));
-  const paintVol = () => (pct.textContent = isMuted() ? 'muted' : `${slider.value}%`);
+  const paintVol = () => (pct.textContent = isMuted() ? t('set.muted') : `${slider.value}%`);
   slider.addEventListener('input', () => {
     setVolume(Number(slider.value) / 100);
     if (isMuted()) setMuted(false);
@@ -94,52 +108,52 @@ export function settingsPanel(hooks: SettingsHooks): HTMLDivElement {
   const mute = toggle(() => !isMuted(), (on) => {
     setMuted(!on);
     paintVol();
-  }, 'Sound on');
+  }, t('set.soundon'));
   const paintMute = () => {
     mute.classList.toggle('on', !isMuted());
     mute.setAttribute('aria-checked', String(!isMuted()));
   };
   paintVol();
-  row('Sound', h('div.vol', {}, mute, slider, pct), 'Master volume for effects and the quiet ambient bed. The switch mutes everything.');
+  row(t('set.sound'), h('div.vol', {}, mute, slider, pct), t('set.sound.desc'));
 
   const note = h('div.set-note');
   note.hidden = true;
-  row('Graphics', seg<QualitySetting>([['auto', 'Auto'], ['low', 'Low'], ['medium', 'Medium'], ['high', 'High']], () => settings.quality, (q) => {
+  row(t('set.graphics'), seg<QualitySetting>([['auto', t('set.auto')], ['low', t('set.low')], ['medium', t('set.medium')], ['high', t('set.high')]], () => settings.quality, (q) => {
     setQuality(q);
     const needsReload = hooks.onQuality?.(q) ?? true;
     note.hidden = !needsReload;
     if (needsReload) {
       note.replaceChildren(
-        h('span', { text: 'Applied. Terrain detail follows the next time the game loads.' }),
+        h('span', { text: t('set.graphics.applied') }),
       );
     }
-  }), 'Applies at once. Auto starts high and steps down if frames get slow. Low suits older laptops.');
+  }), t('set.graphics.desc'));
   root.appendChild(note);
 
-  row('Interface size', seg<string>([['auto', 'Auto'], ['0.9', '90%'], ['1', '100%'], ['1.15', '115%'], ['1.3', '130%']], () => String(settings.uiScale), (v) => {
+  row(t('set.uiscale'), seg<string>([['auto', t('set.auto')], ['0.9', '90%'], ['1', '100%'], ['1.15', '115%'], ['1.3', '130%']], () => String(settings.uiScale), (v) => {
     settings.uiScale = v === 'auto' ? 'auto' : Number(v);
     saveSettings();
     applyUiScale();
-  }), 'Auto fits the window: smaller on a laptop, larger on a big screen.');
+  }), t('set.uiscale.desc'));
 
-  row('Edge panning', toggle(() => settings.edgePan, (v) => {
+  row(t('set.edgepan'), toggle(() => settings.edgePan, (v) => {
     settings.edgePan = v;
     saveSettings();
     hooks.onEdgePan(v);
-  }, 'Edge panning'), 'Move the view when the cursor touches the edge of the window.');
+  }, t('set.edgepan')), t('set.edgepan.desc'));
 
-  row('Left-click orders', toggle(() => settings.leftClickOrders, (v) => {
+  row(t('set.leftclick'), toggle(() => settings.leftClickOrders, (v) => {
     settings.leftClickOrders = v;
     saveSettings();
-  }, 'Left-click orders'), 'With your people selected, clicking the ground (or an enemy, a stone, your tower) sends them, like a right-click. Clicking your own people or buildings still selects them.');
+  }, t('set.leftclick')), t('set.leftclick.desc'));
 
   const hintsRow = h('div', { style: 'display:flex;gap:0.75rem;align-items:center' },
     toggle(() => settings.hints, (v) => {
       settings.hints = v;
       saveSettings();
-    }, 'Hints'),
-    h('button.tg-btn', { type: 'button', text: 'Show all hints again', onclick: () => hooks.onResetHints() }),
+    }, t('set.hints')),
+    h('button.tg-btn', { type: 'button', text: t('set.hints.reset'), onclick: () => hooks.onResetHints() }),
   );
-  row('Hints', hintsRow, 'Small tips during your first games.');
+  row(t('set.hints'), hintsRow, t('set.hints.desc'));
   return root;
 }

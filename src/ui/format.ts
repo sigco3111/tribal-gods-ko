@@ -8,6 +8,7 @@
 
 import { BUILDINGS, DWELLING_TIERS, spellDef, UNITS } from '../sim/catalog';
 import type { Building, Unit } from '../sim/world-state';
+import { t } from '../i18n';
 
 /** 75 → "1:15", 3725 → "1:02:05". */
 export function fmtClock(seconds: number): string {
@@ -22,9 +23,9 @@ export function fmtClock(seconds: number): string {
 export function fmtEta(seconds: number): string {
   if (!Number.isFinite(seconds)) return '—';
   const s = Math.max(0, Math.ceil(seconds));
-  if (s < 60) return `${s}s`;
+  if (s < 60) return t('fmt.s', { n: s });
   const m = Math.floor(s / 60);
-  return `${m}m ${String(s % 60).padStart(2, '0')}s`;
+  return t('fmt.ms', { m, s: String(s % 60).padStart(2, '0') });
 }
 
 /** ETA that fits a spell slot: "45s", "2m 05s", then whole minutes from ten ("14m"). */
@@ -41,12 +42,12 @@ export function fmtRate(perSecond: number): string {
 /** 1 → "1 tile", 4.5 → "4.5 tiles". */
 export function fmtTiles(n: number): string {
   const v = Math.round(n * 10) / 10;
-  return `${v} ${v === 1 ? 'tile' : 'tiles'}`;
+  return t(v === 1 ? 'fmt.tile' : 'fmt.tiles', { n: v });
 }
 
 /** 0 → "Instant", 2.5 → "2.5s". */
 export function fmtSeconds(n: number): string {
-  return n <= 0 ? 'Instant' : `${Math.round(n * 10) / 10}s`;
+  return n <= 0 ? t('fmt.instant') : t('fmt.s', { n: Math.round(n * 10) / 10 });
 }
 
 /** Player-facing name of a building (dwellings by their tier). */
@@ -64,43 +65,43 @@ type ActivityUnit = Pick<
  * the building a garrisoned unit is inside (null if unknown).
  */
 export function activityText(u: ActivityUnit, insideKind: string | null = null): string {
-  if (u.hp <= 0) return 'Fallen';
-  if (u.lifted > 0) return 'Caught in the wind';
-  if (u.pacified > 0) return 'Spellbound by a chant';
-  if (u.castSpell) return u.state === 'working' ? `Casting ${spellDef(u.castSpell).name}` : `Going to cast ${spellDef(u.castSpell).name}`;
+  if (u.hp <= 0) return t('act.fallen');
+  if (u.lifted > 0) return t('act.lifted');
+  if (u.pacified > 0) return t('act.pacified');
+  if (u.castSpell) return u.state === 'working' ? t('act.cast', { spell: spellDef(u.castSpell).name }) : t('act.cast.go', { spell: spellDef(u.castSpell).name });
   if (u.garrison >= 0 || (u.hidden && u.state === 'inside')) {
-    if (insideKind === 'shrine') return 'Praying at the shrine';
-    if (insideKind === 'tower') return 'Manning the watchtower';
-    if (insideKind && BUILDINGS[insideKind as keyof typeof BUILDINGS]?.trains) return 'In training';
-    return 'At home';
+    if (insideKind === 'shrine') return t('act.shrine');
+    if (insideKind === 'tower') return t('act.tower');
+    if (insideKind && BUILDINGS[insideKind as keyof typeof BUILDINGS]?.trains) return t('act.training');
+    return t('act.home');
   }
   switch (u.task) {
     case 'chop':
-      return u.state === 'working' ? 'Felling a tree' : 'Going to fell a tree';
+      return u.state === 'working' ? t('act.chop') : t('act.chop.go');
     case 'deliverWood':
-      return 'Hauling wood';
+      return t('act.haul');
     case 'build':
-      return u.state === 'working' ? 'Building' : 'Going to build';
+      return u.state === 'working' ? t('act.build') : t('act.build.go');
     case 'goHome':
-      return 'Heading home';
+      return t('act.gohome');
     case 'train':
-      return 'Going to train';
+      return t('act.train.go');
     case 'attack':
-      return u.state === 'fighting' ? 'Fighting' : 'Charging an enemy';
+      return u.state === 'fighting' ? t('act.fight') : t('act.charge');
     case 'attackBuilding':
-      return u.state === 'fighting' ? 'Wrecking a building' : 'Marching on a building';
+      return u.state === 'fighting' ? t('act.wreck') : t('act.wreck.go');
     case 'worship':
-      return u.state === 'working' ? 'Communing with a stone' : 'Going to a standing stone';
+      return u.state === 'working' ? t('act.commune') : t('act.commune.go');
     case 'garrison':
-      return 'Heading inside';
+      return t('act.garrison.go');
     case 'chant':
-      return 'Chanting';
+      return t('act.chant');
     default:
       break;
   }
-  if (u.state === 'fighting') return 'Fighting';
-  if (u.state === 'moving') return u.carrying ? 'Hauling wood' : 'Walking';
-  if (u.kind === 'brave') return 'Idle';
-  if (u.kind === 'shaman') return 'Ready to cast';
-  return UNITS[u.kind].sight > 0 ? 'Standing guard' : 'Waiting';
+  if (u.state === 'fighting') return t('act.fight');
+  if (u.state === 'moving') return u.carrying ? t('act.haul') : t('act.walk');
+  if (u.kind === 'brave') return t('act.idle');
+  if (u.kind === 'shaman') return t('act.ready');
+  return UNITS[u.kind].sight > 0 ? t('act.guard') : t('act.wait');
 }

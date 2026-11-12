@@ -14,6 +14,7 @@ import { describedControls, HOTKEYS, HotkeyGroup, keyLabel, orderVerb } from './
 import { buildingIcon, icon, spellIcon, UiIconName } from './icons';
 import { carve } from './lettering';
 import { settings } from './settings';
+import { t } from '../i18n';
 
 css('help', `
 .help { display: grid; gap: 1.4rem; }
@@ -34,12 +35,12 @@ css('help', `
 `);
 
 const concepts = (): Array<{ icon: UiIconName; title: string; text: string }> => [
-  { icon: 'population', title: 'Your tribe', text: 'Villagers fell trees, haul wood, raise buildings and move into dwellings, which breed more villagers. You guide them; they get on with life.' },
-  { icon: 'mana', title: 'Mana and charges', text: 'Faith flows from your people into every spell that is charging. A spell holds a few charges; casting spends one. Switch spells off (right-click) to charge the rest faster.' },
-  { icon: 'leader', title: 'Your leader', text: 'The only one who casts. Pick a spell, click the world: the leader walks into range and casts. If they fall, they return to the home circle while the tribe lives.' },
-  { icon: 'stone', title: 'Standing stones', text: `Each stone shows the spell it holds. Select your leader and ${orderVerb(settings.leftClickOrders)} the stone: the leader performs a ritual there to learn the spell for good, or to borrow a few casts. Damage breaks the ritual, so bring an escort.` },
-  { icon: 'hammer', title: 'Buildings and training', text: 'Lodges turn villagers into fighters — queue them on the building. A watchtower holds two fighters; a shrine full of praying villagers charges spells faster.' },
-  { icon: 'trophy', title: 'Winning', text: 'Each scenario has objectives (top right). In a skirmish: be the last tribe standing.' },
+  { icon: 'population', title: t('help.c1.t'), text: t('help.c1.d') },
+  { icon: 'mana', title: t('help.c2.t'), text: t('help.c2.d') },
+  { icon: 'leader', title: t('help.c3.t'), text: t('help.c3.d') },
+  { icon: 'stone', title: t('help.c4.t'), text: t('help.c4.d', { verb: orderVerb(settings.leftClickOrders) }) },
+  { icon: 'hammer', title: t('help.c5.t'), text: t('help.c5.d') },
+  { icon: 'trophy', title: t('help.c6.t'), text: t('help.c6.d') },
 ];
 
 const GROUPS: HotkeyGroup[] = ['Camera', 'Selection', 'Spells', 'Build', 'Game'];
@@ -49,20 +50,20 @@ function row(keys: string[], label: string, ic = ''): string {
 }
 
 export function helpHtml(): string {
-  let html = `<div class="help"><section><h3>${carve('The idea')}</h3><div class="help-cards">`;
+  let html = `<div class="help"><section><h3>${carve(t('help.idea'))}</h3><div class="help-cards">`;
   for (const c of concepts()) html += `<div class="help-card"><span class="ic">${icon(c.icon, 20)}</span><div><b>${c.title}</b><p>${c.text}</p></div></div>`;
-  html += `</div></section><section><h3>${carve('Controls')}</h3><div class="help-keys">`;
+  html += `</div></section><section><h3>${carve(t('help.controls'))}</h3><div class="help-keys">`;
   for (const g of GROUPS) {
-    html += `<div class="help-group${g === 'Spells' || g === 'Build' ? ' compact' : ''}"><h4>${g}</h4>`;
+    html += `<div class="help-group${g === 'Spells' || g === 'Build' ? ' compact' : ''}"><h4>${t(`hk.group.${g}`)}</h4>`;
     for (const d of describedControls(settings.leftClickOrders).filter((x) => x.group === g)) html += row(d.keys, d.desc);
     if (g === 'Selection') {
-      html += row(['1', '–', '9'], 'Select a control group (twice: jump to it)');
-      html += row(['Ctrl', '1', '–', '9'], 'Make the selection a control group');
+      html += row(['1', '–', '9'], t('help.sel'));
+      html += row(['Ctrl', '1', '–', '9'], t('help.set'));
     }
     for (const hk of HOTKEYS.filter((x) => x.group === g && !x.action.startsWith('group-') && x.code !== 'Backspace')) {
       if (hk.action.startsWith('spell:')) {
         const id = hk.action.slice(6) as SpellId;
-        html += row([keyLabel(hk)], `${escapeHtml(SPELLS.find((s) => s.id === id)!.name)} <span style="color:var(--text-3)">· tier ${SPELLS.find((s) => s.id === id)!.tier}</span>`, spellIcon(id, 18));
+        html += row([keyLabel(hk)], `${escapeHtml(SPELLS.find((s) => s.id === id)!.name)} <span style="color:var(--text-3)">· ${t('help.tier', { n: SPELLS.find((s) => s.id === id)!.tier })}</span>`, spellIcon(id, 18));
       } else if (hk.action.startsWith('build:')) {
         const kind = hk.action.slice(6) as BuildingKind;
         html += row([keyLabel(hk)], escapeHtml(BUILDINGS[kind].name), buildingIcon(kind, 18));
