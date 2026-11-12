@@ -7,6 +7,28 @@
 > **▶ [브라우저에서 바로 하기](https://sigco3111.github.io/tribal-gods-ko/)**
 > UI 미리보기(WebGL 없이): [메뉴](https://sigco3111.github.io/tribal-gods-ko/ui-preview.html?state=menu) · [설정](https://sigco3111.github.io/tribal-gods-ko/ui-preview.html?state=settings) · [게임 방법](https://sigco3111.github.io/tribal-gods-ko/ui-preview.html?state=help) · [HUD](https://sigco3111.github.io/tribal-gods-ko/ui-preview.html?state=hud)
 
+## 스크린샷
+
+> **참고:** 아래 이미지는 3D 장면 없이 그린 UI 미리보기(`ui-preview.html`)입니다. 실제 게임 화면(WebGL)은 캡처 환경에서 렌더링할 수 없어 담지 못했습니다. 배경의 하늘과 둥근 언덕은 3D 행성 대신 쓰는 대체 그림입니다.
+
+![한국어 메인 메뉴](docs/screenshots/01-menu.webp)
+*한국어 메인 메뉴: TRIBAL GODS 로고와 캠페인·자유 대전·레벨·편집기·설정·게임 방법·언어 버튼, 아래쪽에 비공식 한글화와 원작 표기가 보입니다.*
+
+![자유 대전 설정](docs/screenshots/02-skirmish.webp)
+*자유 대전 설정: 나의 부족(숲 부족·강의 왕조·북방인), 난이도(쉬움·보통·어려움), 경쟁 부족 수(1~3), 시작 버튼이 보입니다. 일부 작은 글씨는 어두운 배경에서 흐리게 보입니다.*
+
+![설정 화면](docs/screenshots/03-settings.webp)
+*설정: 언어(한국어/English), 소리, 그래픽, 화면 크기, 가장자리 이동, 왼쪽 클릭 명령, 힌트 항목이 보입니다.*
+
+![게임 방법과 단축키](docs/screenshots/04-help.webp)
+*게임 방법: '게임의 기본' 설명 카드 여섯 개와 '조작법'(카메라·선택·주문 단축키 표)의 윗부분이 보입니다. 카드 안 설명 글씨는 어두워 읽기 어렵습니다.*
+
+![HUD 미리보기](docs/screenshots/05-hud.webp)
+*HUD 미리보기: 위쪽 자원 표시줄(목재·거주·주문 충전 등), 안내 메시지, 목표 패널, 미니맵, 건설 패널, 주문 패널이 보입니다. 3D 장면이 없어 가운데는 비어 있습니다.*
+
+![English 메인 메뉴](docs/screenshots/06-menu-en.webp)
+*영어로 바꾼 메인 메뉴(`?lang=en`): 같은 메뉴가 영어로 표시됩니다.*
+
 ## 안내 (NOTICE)
 
 - 원작: **Tribal Gods** — 제작자 **br3nt**, 원본 저장소 <https://github.com/br3nt/tribal-gods>
