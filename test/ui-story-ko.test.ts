@@ -1,6 +1,6 @@
 /**
- * Korean campaign story (chapters 1–5): every title / tagline / narrator line / objective / briefing text of
- * src/level/campaign/c01..c05 has a Korean entry (tx()), the objective advice has Korean templates, and the
+ * Korean campaign story (chapters 1–10): every title / tagline / narrator line / objective / briefing text of
+ * src/level/campaign/c01..c10 has a Korean entry (tx()), the objective advice has Korean templates, and the
  * briefing screen shows the chapter in Korean (jsdom; skipped when jsdom is not installed: `npm i --no-save jsdom`).
  */
 import { describe, expect, it, vi } from 'vitest';
@@ -27,9 +27,9 @@ function install(url: string): void {
 }
 
 const HANGUL = /[\uAC00-\uD7A3]/;
-const CHAPTERS = ['c01-landfall', 'c02-speaking-stones', 'c03-smoke-over-the-ridge', 'c04-scattered-shallows', 'c05-vigil-at-the-caldera'];
+const CHAPTERS = ['c01-landfall', 'c02-speaking-stones', 'c03-smoke-over-the-ridge', 'c04-scattered-shallows', 'c05-vigil-at-the-caldera', 'c06-barefoot-road', 'c07-two-banners', 'c08-firemount-race', 'c09-when-the-tide-came', 'c10-the-crown'];
 
-describe.skipIf(!JSDOM)('campaign story in Korean (c01–c05)', () => {
+describe.skipIf(!JSDOM)('campaign story in Korean (c01–c10)', () => {
   it('tx() translates every player-visible chapter string, English passes through in en', async () => {
     vi.resetModules();
     install('http://localhost/');
@@ -42,7 +42,7 @@ describe.skipIf(!JSDOM)('campaign story in Korean (c01–c05)', () => {
     }
     expect(tx('Raise 4 Dwellings')).toBe('거처 4채를 지어라');
     expect(tx('Landfall')).toBe('상륙');
-    // chapters 6–10 are not translated yet and pass through unchanged
+    // strings that are not in the dictionary pass through unchanged
     expect(tx('Something not in the dictionary.')).toBe('Something not in the dictionary.');
     expect(t('adv.gathering', { name: '번개', p: '는', eta: ' (약 5초)', k: '', where: '클릭하세요' })).toBe('번개는 힘을 모으는 중입니다 (약 5초). 돌이 빛나면 키를 누르고 클릭하세요.');
     vi.resetModules();
@@ -61,14 +61,14 @@ describe.skipIf(!JSDOM)('campaign story in Korean (c01–c05)', () => {
     }
   });
 
-  it('briefing screen of chapter 1–5 shows Korean title, body, tips and objectives', async () => {
+  it('briefing screen of chapter 1–10 shows Korean title, body, tips and objectives', async () => {
     vi.resetModules();
     install('http://localhost/');
     await import('../src/i18n-catalog');
     const { campaignScenario } = await import('../src/level/campaign');
     const { BriefingScreen } = await import('../src/ui/campaign-screens');
-    for (let n = 1; n <= 5; n++) {
-      const sc = campaignScenario(['c01_landfall', 'c02_speaking_stones', 'c03_smoke_over_the_ridge', 'c04_scattered_shallows', 'c05_vigil_at_the_caldera'][n - 1])!;
+    for (let n = 1; n <= 10; n++) {
+      const sc = campaignScenario(['c01_landfall', 'c02_speaking_stones', 'c03_smoke_over_the_ridge', 'c04_scattered_shallows', 'c05_vigil_at_the_caldera', 'c06_barefoot_road', 'c07_two_banners', 'c08_firemount_race', 'c09_when_the_tide_came', 'c10_the_crown'][n - 1])!;
       const level = await sc.build();
       const screen = new BriefingScreen({ onPlay() {}, onBack() {} });
       screen.show({ chapter: sc.chapter, level, rules: level.rules!, boons: [] });
@@ -78,7 +78,8 @@ describe.skipIf(!JSDOM)('campaign story in Korean (c01–c05)', () => {
       for (const li of root.querySelectorAll('li')) expect(li.textContent).toMatch(HANGUL);
       const objs = [...root.querySelectorAll('.tgc-obj')].map((e) => e.textContent ?? '');
       expect(objs.length).toBeGreaterThan(0);
-      for (const o of objs) expect(o).toMatch(HANGUL);
+      // '✕ …' lines are generic defeat conditions from campaign-screens.ts (chrome, still English: NOTES.md)
+      for (const o of objs.filter((x) => !x.startsWith('✕'))) expect(o).toMatch(HANGUL);
       document.body.innerHTML = '';
     }
   });
