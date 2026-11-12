@@ -5,6 +5,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { createServer } from 'vite';
+import { extract } from './campaign-strings.mjs';
 
 const root = join(import.meta.dirname, '..');
 const walk = (d) => readdirSync(d).flatMap((n) => { const p = join(d, n); return statSync(p).isDirectory() ? walk(p) : p.endsWith('.ts') ? [p] : []; });
@@ -43,6 +44,17 @@ for (const s of SPELLS) if (!C.SPELL_KO[s.id]) errors.push(`spell ${s.id} has no
 for (const k of Object.keys(CIVS)) if (!C.CIV_KO[k]) errors.push(`civ ${k} has no Korean text`);
 for (const k of Object.keys(DIFFICULTIES)) if (!C.DIFF_KO[k]) errors.push(`difficulty ${k} has no Korean text`);
 for (const m of [C.UNIT_KO, C.BUILDING_KO, C.SPELL_KO, C.CIV_KO]) for (const [k, v] of Object.entries(m)) if (!v.every((x) => HANGUL_RE.test(x))) errors.push(`catalog ${k} has a non-Korean text`);
-console.log(`UI keys: ${Object.keys(DICT.en).length} (used literally in source: ${used.size}, dynamic prefixes: ${prefixes.size}); catalog: ${Object.keys(UNITS).length} units, ${Object.keys(BUILDINGS).length} buildings, ${SPELLS.length} spells, ${Object.keys(CIVS).length} civs`);
+// campaign chapters 1-5: every player-visible English string must have a Korean entry (found through tx())
+const simEn = new Map(Object.entries(DICT.en).filter(([k]) => k.startsWith('sim.')).map(([k, v]) => [v, k]));
+const campDir = join(root, 'src/level/campaign');
+let storyN = 0;
+for (const f of readdirSync(campDir).filter((n) => /^c0[1-5]-/.test(n))) {
+  for (const en of ['Landfall'].filter(() => f.startsWith('c01')).concat(extract(join(campDir, f)))) {
+    if (en.includes('${}')) continue; // templated (Raise N Dwellings): handled by a tx() pattern
+    storyN++;
+    if (!simEn.has(en)) errors.push(`${f}: no Korean entry for "${en.slice(0, 70)}"`);
+  }
+}
+console.log(`UI keys: ${Object.keys(DICT.en).length} (used literally in source: ${used.size}, dynamic prefixes: ${prefixes.size}); campaign c01-c05 strings: ${storyN}; catalog: ${Object.keys(UNITS).length} units, ${Object.keys(BUILDINGS).length} buildings, ${SPELLS.length} spells, ${Object.keys(CIVS).length} civs`);
 if (errors.length) { console.error(errors.join('\n')); process.exit(1); }
 console.log('i18n check OK');
