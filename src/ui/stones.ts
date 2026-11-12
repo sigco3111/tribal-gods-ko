@@ -15,7 +15,7 @@
 import { communeSecondsFor, spellDef, Tribe, tribeName, TribeId, UNITS, UnitKind } from '../sim/catalog';
 import type { Monument, World } from '../sim/world-state';
 import { fmtSeconds } from './format';
-import { getLang, josa, t } from '../i18n';
+import { getLang, josa, t, tx } from '../i18n';
 
 export interface Ritual {
   tribe: Tribe;
@@ -86,5 +86,5 @@ export function stoneBlocked(world: World, m: Monument): string | null {
 /** Display name for a tribe ("the Ashmark", "your tribe"). */
 export function tribeLabelOf(world: World, tribe: Tribe): string {
   if (tribe === 'wild') return t('tribe.wild');
-  return tribeName(world.rules, tribe as TribeId);
+  return tx(tribeName(world.rules, tribe as TribeId));
 }

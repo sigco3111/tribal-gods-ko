@@ -134,7 +134,7 @@ export class CampaignController {
         bestTime: rec?.bestTime ?? null,
         stars: rec?.stars.length ?? 0,
         starsTotal: null,
-        boon: p.boons[s.id] ? BOONS[p.boons[s.id]].name : boonOffer(p, s.id).length ? 'unclaimed — choose at the next briefing' : undefined,
+        boon: p.boons[s.id] ? BOONS[p.boons[s.id]].name : boonOffer(p, s.id).length ? t('cs.unclaimed') : undefined,
       };
     });
     this.map.show(nodes);

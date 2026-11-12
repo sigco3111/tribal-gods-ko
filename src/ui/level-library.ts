@@ -14,7 +14,7 @@
  * string, Delete is only offered for levels that are yours to delete.
  */
 
-import { t } from '../i18n';
+import { t, tx } from '../i18n';
 import { LevelData, codeToLevel, levelToCode } from '../level/level-format';
 import { OFFICIAL_LEVELS } from '../level/official-levels';
 import { CAMPAIGN } from '../level/campaign';
@@ -148,7 +148,7 @@ export class LevelLibrary {
       build: c.build,
       official: true,
       savedAt: 0,
-      campaign: { chapter: c.chapter, title: c.title, tagline: c.tagline, locked: !(this.hooks.isScenarioUnlocked?.(c.id) ?? false) },
+      campaign: { chapter: c.chapter, title: tx(c.title), tagline: tx(c.tagline), locked: !(this.hooks.isScenarioUnlocked?.(c.id) ?? false) },
     }));
     const shelf = this.shelf?.selectedIndex ?? 0;
     if (shelf === 1) return official;
@@ -191,9 +191,9 @@ export class LevelLibrary {
   private card(e: CardEntry): HTMLDivElement {
     const card = document.createElement('div');
     card.className = 'lib-card tg-panel mat-hide';
-    const name = e.campaign ? `${e.campaign.chapter}. ${e.campaign.title}` : e.level?.name ?? offName(e.id) ?? e.id;
+    const name = e.campaign ? `${e.campaign.chapter}. ${e.campaign.title}` : tx(e.level?.name ?? '') || offName(e.id) || e.id;
     const author = e.level?.author ?? 'Tribal Gods';
-    const desc = e.campaign ? (e.campaign.locked ? t('lib.locked') : e.campaign.tagline) : e.level?.desc ?? offDesc(e.id);
+    const desc = e.campaign ? (e.campaign.locked ? t('lib.locked') : e.campaign.tagline) : tx(e.level?.desc ?? '') || offDesc(e.id);
 
     const head = document.createElement('div');
     head.innerHTML =
