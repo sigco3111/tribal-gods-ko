@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>트라이벌 갓즈 · UI 미리보기 (WebGL 없음)</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #1a2230; }
+      /* Stand-in for the 3D planet: sky over a round green-blue horizon. */
+      #bg { position: fixed; inset: 0; background:
+        radial-gradient(ellipse 90% 70% at 70% 120%, #3b6b43 0 45%, #2c5a73 46% 60%, transparent 61%),
+        linear-gradient(180deg, #2a3b57 0%, #6b87a6 70%, #9fb7c9 100%); }
+    </style>
+    <script type="module" crossorigin src="/tribal-gods-ko/assets/uipreview-fa9937a5.js"></script>
+    <link rel="modulepreload" crossorigin href="/tribal-gods-ko/assets/heightmap-5e351e19.js">
+    <link rel="modulepreload" crossorigin href="/tribal-gods-ko/assets/three-core-f9b7c6e3.js">
+    <link rel="modulepreload" crossorigin href="/tribal-gods-ko/assets/world-state-f6d43ca7.js">
+    <link rel="modulepreload" crossorigin href="/tribal-gods-ko/assets/menu-fd6e1b0f.js">
+    <link rel="stylesheet" crossorigin href="/tribal-gods-ko/assets/menu-f99f8bff.css">
+  </head>
+  <body>
+    <div id="bg"></div>
+  </body>
+</html>
