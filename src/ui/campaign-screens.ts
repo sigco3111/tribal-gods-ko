@@ -24,6 +24,7 @@ import { STARTER_SPELLS } from '../sim/rules';
 import { START_BRAVES, START_WOOD } from '../config';
 import type { LevelData } from '../level/level-format';
 import { carve } from './lettering';
+import { t, tx } from '../i18n';
 
 const CSS = `
 .tgc-overlay {
@@ -198,8 +199,8 @@ export class CampaignMapScreen extends Overlay {
       card.dataset.id = n.id;
       const num = n.state === 'locked' ? el('div', 'tgc-num', '·') : carved('div', 'tgc-num', roman(n.chapter));
       const text = el('div');
-      text.append(el('div', 'tgc-name', n.state === 'locked' ? `${roman(n.chapter)}. ${n.title}` : n.title), el('div', 'tgc-tag', n.tagline));
-      if (n.state !== 'locked') text.appendChild(el('div', 'tgc-teach', n.teaches));
+      text.append(el('div', 'tgc-name', n.state === 'locked' ? `${roman(n.chapter)}. ${tx(n.title)}` : tx(n.title)), el('div', 'tgc-tag', tx(n.tagline)));
+      if (n.state !== 'locked') text.appendChild(el('div', 'tgc-teach', tx(n.teaches)));
       const meta = el('div', 'tgc-meta');
       if (n.state === 'won') {
         const total = n.starsTotal ?? 0;
@@ -324,7 +325,7 @@ export class BriefingScreen extends Overlay {
     this.open();
     const b = d.rules.briefing;
     const head = el('div', 'tgc-head');
-    head.append(el('span', 'tgc-sub', `Chapter ${roman(d.chapter)}`), carved('h1', 'tgc-title', b.title));
+    head.append(el('span', 'tgc-sub', t('camp.chapter', { n: roman(d.chapter) })), carved('h1', 'tgc-title', tx(b.title)));
     head.style.flexDirection = 'column';
     head.style.alignItems = 'flex-start';
     head.style.gap = '4px';
@@ -332,23 +333,23 @@ export class BriefingScreen extends Overlay {
 
     const grid = el('div', 'tgc-grid');
     const story = el('div', 'tgc-panel tg-panel mat-hide');
-    story.append(el('p', 'tgc-body', b.body), el('div', 'tgc-h', 'Counsel'));
+    story.append(el('p', 'tgc-body', tx(b.body)), el('div', 'tgc-h', t('camp.counsel')));
     const tips = el('ul', 'tgc-list');
-    for (const t of b.tips) tips.appendChild(el('li', undefined, t));
+    for (const tip of b.tips) tips.appendChild(el('li', undefined, tx(tip)));
     story.appendChild(tips);
 
-    story.appendChild(el('div', 'tgc-h', 'Objectives'));
+    story.appendChild(el('div', 'tgc-h', t('ob.title')));
     for (const o of d.rules.objectives.filter((x) => x.after === undefined)) { // later steps of the story arrive in play
       const row = el('div', `tgc-obj${o.optional ? ' optional' : ''}`);
-      row.append(el('span', 'mark', o.optional ? '☆' : '◆'), el('span', undefined, o.text + (o.optional ? ' (optional)' : '')));
+      row.append(el('span', 'mark', o.optional ? '☆' : '◆'), el('span', undefined, tx(o.text) + (o.optional ? ` (${t('ob.optional')})` : '')));
       story.appendChild(row);
     }
     const fails = [...(d.rules.fail ?? []).map((f) => failText(f)).filter((x): x is string => !!x), ...scriptedDefeats(d.rules)];
     if (fails.length) {
-      story.appendChild(el('div', 'tgc-h', 'Beware'));
+      story.appendChild(el('div', 'tgc-h', t('camp.beware')));
       for (const f of fails) {
         const row = el('div', 'tgc-obj miss');
-        row.append(el('span', 'mark', '✕'), el('span', undefined, f));
+        row.append(el('span', 'mark', '✕'), el('span', undefined, tx(f)));
         story.appendChild(row);
       }
     }
@@ -428,17 +429,17 @@ export class DebriefScreen extends Overlay {
     this.open();
     const win = d.result === 'victory';
     const head = el('div');
-    head.append(el('div', 'tgc-sub', `Chapter ${roman(d.chapter)} · ${d.title}`), carved('h1', `tgc-result ${d.result}`, win ? 'Victory' : 'Defeat'), el('p', 'tgc-body', d.reason));
+    head.append(el('div', 'tgc-sub', `${t('camp.chapter', { n: roman(d.chapter) })} · ${tx(d.title)}`), carved('h1', `tgc-result ${d.result}`, win ? t('go.victory') : t('go.defeat')), el('p', 'tgc-body', tx(d.reason)));
     head.style.marginBottom = '18px';
     this.inner.appendChild(head);
 
     const panel = el('div', 'tgc-panel tg-panel mat-hide');
     panel.appendChild(el('div', 'tgc-h', 'Time'));
     panel.appendChild(el('div', undefined, `${formatTime(d.seconds)}${win && d.bestTime !== null ? ` · best ${formatTime(d.bestTime)}` : ''}`));
-    panel.appendChild(el('div', 'tgc-h', 'Objectives'));
+    panel.appendChild(el('div', 'tgc-h', t('ob.title')));
     for (const o of d.objectives) {
       const row = el('div', `tgc-obj ${o.done ? 'done' : 'miss'}${o.optional ? ' optional' : ''}`);
-      row.append(el('span', 'mark', o.done ? (o.optional ? '★' : '✓') : o.optional ? '☆' : '✕'), el('span', undefined, o.text));
+      row.append(el('span', 'mark', o.done ? (o.optional ? '★' : '✓') : o.optional ? '☆' : '✕'), el('span', undefined, tx(o.text)));
       panel.appendChild(row);
     }
     this.inner.appendChild(panel);

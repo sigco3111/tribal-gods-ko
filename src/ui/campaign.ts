@@ -26,6 +26,7 @@ import type { LevelData } from '../level/level-format';
 import type { ScenarioRules } from '../sim/catalog';
 import type { World } from '../sim/world-state';
 import { BriefingScreen, CampaignMapScreen, DebriefScreen, MapNode } from './campaign-screens';
+import { t, tx } from '../i18n';
 
 export interface CampaignHooks {
   world: World;
@@ -158,7 +159,7 @@ export class CampaignController {
     const pending = this.pendingBoonChapter(id);
     this.briefing.show({
       chapter: s.chapter, level, rules: rulesForPlay(p, id, level.rules!), boons: boonsFor(p, id),
-      ...(pending ? { pendingBoon: { chapterTitle: campaignScenario(pending)!.title, offer: boonOffer(p, pending) } } : {}),
+      ...(pending ? { pendingBoon: { chapterTitle: tx(campaignScenario(pending)!.title), offer: boonOffer(p, pending) } } : {}),
     });
   }
 
@@ -201,7 +202,7 @@ export class CampaignController {
   /** Title of a chapter, for the Continue button. */
   titleOf(id: string): string {
     const s = campaignScenario(id);
-    return s ? `Ch. ${s.chapter} · ${s.title}` : 'Campaign';
+    return s ? `${t('camp.ch', { n: s.chapter })} · ${tx(s.title)}` : t('menu.campaign');
   }
 
   /** Per-frame: game over → record + debrief. Cheap when idle. */

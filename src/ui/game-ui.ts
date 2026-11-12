@@ -26,6 +26,7 @@ import { TILE, WORLD_SIZE } from '../config';
 import { wrapDelta } from '../core/util';
 import { BuildingKind, SpellId, UNITS } from '../sim/catalog';
 import type { World } from '../sim/world-state';
+import { tx } from '../i18n';
 import { AlertFeed } from './alerts';
 import { appState, SPEEDS } from './app-state';
 import { BuildMenu } from './build-menu';
@@ -402,7 +403,7 @@ export class GameUi {
     if (w.messageSeq === this.heardMessages) return;
     const fresh = w.messages.slice(-Math.min(w.messages.length, w.messageSeq - this.heardMessages));
     for (const m of fresh) {
-      this.narrator.say(m.text);
+      this.narrator.say(tx(m.text));
       if (m.focus) {
         // The line is about a place: ping it, and drift the camera there unless the player is busy.
         this.minimap.ping(m.focus.x, m.focus.z, 'info');
