@@ -31,8 +31,11 @@ export type Tribe = TribeId | 'wild';
 export function tribeName(rules: ScenarioRules, id: TribeId): string {
   const named = rules.tribes.find((t) => t.id === id)?.name;
   if (named) return named;
-  return id === 'player' ? 'your tribe' : `the ${id[0].toUpperCase()}${id.slice(1)} tribe`;
+  return TRIBE_LABELS[id] ?? (id === 'player' ? 'your tribe' : `the ${id[0].toUpperCase()}${id.slice(1)} tribe`);
 }
+
+/** Default tribe names; the Korean localization (i18n-catalog.ts) replaces them in place. */
+export const TRIBE_LABELS: Record<string, string> = {};
 
 export const TRIBE_COLORS: Record<Tribe, number> = {
   player: 0x2f7fe6,
