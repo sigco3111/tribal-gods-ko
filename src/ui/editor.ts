@@ -33,12 +33,14 @@ import { pickGroundTile } from '../render/ground-picker';
 import { walkable } from '../sim/pathfinding';
 import { SPELLS, spellDef, SpellId, TribeId } from '../sim/catalog';
 import { World } from '../sim/world-state';
+import { josa, t } from '../i18n';
 import { appState } from './app-state';
 import { css } from './dom';
 import { icon, spellIcon, UiIconName } from './icons';
 import { toolState } from './tools';
 
-const TRIBE_NAMES: Record<TribeId, string> = { player: 'Your tribe', red: 'Red rival', gold: 'Gold rival', violet: 'Violet rival' };
+const tribeName = (id: TribeId): string => t(`ed.tribe.${id}`);
+const TRIBE_IDS: TribeId[] = ['player', 'red', 'gold', 'violet'];
 
 css('editor', `
 .ed-bar { position: fixed; top: var(--edge); left: 50%; transform: translateX(-50%); display: none; flex-wrap: wrap; gap: 0.3rem;
@@ -76,28 +78,28 @@ export class Editor {
     this.bar.className = 'ed-bar tg-panel';
     document.body.appendChild(this.bar);
 
-    const tool = (label: string, t: string, title = '', ic: UiIconName = 'target') => {
+    const tool = (label: string, toolId: string, title = '', ic: UiIconName = 'target') => {
       const b = document.createElement('button');
       b.type = 'button';
       b.innerHTML = `${icon(ic, 14)}<span></span>`;
       (b.lastChild as HTMLElement).textContent = label;
       b.title = title;
       b.className = 'tg-btn';
-      b.dataset.tool = t;
+      b.dataset.tool = toolId;
       b.addEventListener('click', () => {
-        toolState.tool = t as never;
+        toolState.tool = toolId as never;
         this.refresh();
       });
       this.bar.appendChild(b);
       return b;
     };
 
-    tool('Raise', 'raise', '', 'plus');
-    tool('Lower', 'lower', '', 'minus');
-    tool('Flatten', 'flatten', 'In the editor this is a brush, not a spell', 'hammer');
-    tool('Tree', 'tree', '', 'wood');
-    tool('Wanderer', 'wildman', '', 'idle');
-    this.monumentBtn = tool('Stone', 'monument', 'Place a standing stone (pick its spell and kind)', 'stone');
+    tool(t('ed.raise'), 'raise', '', 'plus');
+    tool(t('ed.lower'), 'lower', '', 'minus');
+    tool(spellDef('flatten').name, 'flatten', t('ed.flatten.tip'), 'hammer');
+    tool(t('ed.tree'), 'tree', '', 'wood');
+    tool(t('ed.wanderer'), 'wildman', '', 'idle');
+    this.monumentBtn = tool(t('ed.stone'), 'monument', t('ed.stone.tip'), 'stone');
     this.select(
       SPELLS.map((s) => [s.id, s.name]),
       () => this.stoneSpell,
@@ -106,25 +108,25 @@ export class Editor {
         toolState.tool = 'monument';
         this.refresh();
       },
-      'Spell held by the next stone',
+      t('ed.stone.spell.tip'),
     );
-    this.select([['teach', 'teaches'], ['gift', 'gifts 2 casts']], () => this.stoneMode, (v) => {
+    this.select([['teach', t('ed.mode.teach')], ['gift', t('ed.mode.gift')]], () => this.stoneMode, (v) => {
       this.stoneMode = v as 'teach' | 'gift';
       toolState.tool = 'monument';
       this.refresh();
-    }, 'Teach: the first leader to commune learns it. Gift: whoever communes gets two casts; the stone then sleeps.');
-    tool('Home', 'home', 'Move a tribe’s home circle; a new tribe joins as an AI rival', 'home');
+    }, t('ed.mode.tip'));
+    tool(t('ed.home'), 'home', t('ed.home.tip'), 'home');
     this.select(
-      (Object.keys(TRIBE_NAMES) as TribeId[]).map((t) => [t, TRIBE_NAMES[t]]),
+      TRIBE_IDS.map((id) => [id, tribeName(id)]),
       () => this.homeTribe,
       (v) => {
         this.homeTribe = v as TribeId;
         toolState.tool = 'home';
         this.refresh();
       },
-      'Whose home the Home tool moves',
+      t('ed.home.who'),
     );
-    tool('Erase', 'erase', 'Remove trees / wanderers / stones / a rival’s home', 'close');
+    tool(t('ed.erase'), 'erase', t('ed.erase.tip'), 'close');
 
     const sep = () => {
       const s = document.createElement('span');
@@ -133,14 +135,14 @@ export class Editor {
     };
     sep();
 
-    this.nameInput = this.input('level name', 130);
-    this.authorInput = this.input('author', 90);
+    this.nameInput = this.input(t('ed.name.ph'), 130);
+    this.authorInput = this.input(t('ed.author.ph'), 90);
     sep();
 
-    this.action('Save', () => void this.save(), 'check');
-    this.action('Copy code', () => void this.exportCode(), 'book');
-    this.action('Test', () => void this.test(), 'play', true);
-    this.action('Exit', () => hooks.onExit(), 'close');
+    this.action(t('ed.save'), () => void this.save(), 'check');
+    this.action(t('ed.copy'), () => void this.exportCode(), 'book');
+    this.action(t('ed.test'), () => void this.test(), 'play', true);
+    this.action(t('ed.exit'), () => hooks.onExit(), 'close');
 
     this.status = document.createElement('span');
     this.status.className = 'ed-status';
@@ -161,12 +163,12 @@ export class Editor {
   open(existing?: { id?: string; level: LevelData }): void {
     appState.mode = 'editor';
     this.editingId = existing?.id;
-    this.nameInput.value = existing?.level.name ?? 'Untitled Planet';
-    this.authorInput.value = existing?.level.author ?? 'anonymous god';
+    this.nameInput.value = existing?.level.name ?? t('ed.untitled');
+    this.authorInput.value = existing?.level.author ?? t('ed.anon');
     toolState.tool = 'raise';
     this.bar.style.display = 'flex';
     this.refresh();
-    this.say('sculpt, place, then save / test');
+    this.say(t('ed.hello'));
   }
 
   close(): void {
@@ -182,7 +184,7 @@ export class Editor {
         if (walkable(w.map, x, z)) {
           w.trees.push({ x: w.map.wrap(x), z: w.map.wrap(z), alive: true, regrow: 0, burning: 0 });
           w.treesVersion++;
-          this.say('tree planted');
+          this.say(t('ed.tree.done'));
         }
         return;
       case 'wildman':
@@ -196,21 +198,22 @@ export class Editor {
           x: w.map.wrap(x), z: w.map.wrap(z), spell, mode: this.stoneMode, claimedBy: null, claimer: null, sleep: 0,
           ...(gift ? { charges: 2, cooldown: 120 } : {}),
         });
-        this.say(`Stone placed: ${gift ? 'gifts' : 'teaches'} ${spellDef(spell).name}`);
+        this.say(t(gift ? 'ed.placed.gift' : 'ed.placed.teach', { spell: spellDef(spell).name }));
         return;
       }
       case 'home': {
         if (!walkable(w.map, x, z)) return;
         const added = !w.tribes[this.homeTribe];
         w.setHome(this.homeTribe, x, z);
-        this.say(added ? `${TRIBE_NAMES[this.homeTribe]} joins the level` : `${TRIBE_NAMES[this.homeTribe]}: home moved`);
+        const nm = tribeName(this.homeTribe);
+        this.say(added ? t('ed.joined', { name: nm, p: josa(nm, '이/가') }) : t('ed.moved', { name: nm }));
         return;
       }
       case 'erase': {
         // Nearest placeable within 2 tiles dies: trees, wildmen, monuments, then a rival's home.
         // Wrapped distance: the pick and the things on the planet may sit either side of the seam.
         const near = (ax: number, az: number) => Math.hypot(wrapDelta(ax - x, WORLD_SIZE), wrapDelta(az - z, WORLD_SIZE)) < 2;
-        const ti = this.world.trees.findIndex((t) => t.alive && near(t.x, t.z));
+        const ti = this.world.trees.findIndex((tr) => tr.alive && near(tr.x, tr.z));
         if (ti >= 0) {
           this.world.trees.splice(ti, 1);
           this.world.treesVersion++; // the tree renderer re-indexes its per-tree state
@@ -226,8 +229,8 @@ export class Editor {
           this.world.units.splice(ui, 1);
           return;
         }
-        const rival = this.world.activeTribes().find((t) => t !== 'player' && near(this.world.tribes[t]!.home.x, this.world.tribes[t]!.home.z));
-        if (rival) this.say(this.world.removeTribe(rival) ? `${TRIBE_NAMES[rival]} removed` : 'A level needs at least one rival');
+        const rival = this.world.activeTribes().find((id) => id !== 'player' && near(this.world.tribes[id]!.home.x, this.world.tribes[id]!.home.z));
+        if (rival) this.say(this.world.removeTribe(rival) ? t('ed.removed', { name: tribeName(rival), p: josa(tribeName(rival), '이/가') }) : t('ed.needrival'));
         return;
       }
       default:
@@ -237,8 +240,8 @@ export class Editor {
 
   private meta() {
     return {
-      name: this.nameInput.value.trim() || 'Untitled Planet',
-      author: this.authorInput.value.trim() || 'anonymous god',
+      name: this.nameInput.value.trim() || t('ed.untitled'),
+      author: this.authorInput.value.trim() || t('ed.anon'),
       desc: '',
     };
   }
@@ -246,16 +249,16 @@ export class Editor {
   private async save(): Promise<void> {
     const level = await this.world.captureLevel(this.meta());
     this.editingId = saveLevel(level, this.editingId);
-    this.say(`Saved "${level.name}" to your library`);
+    this.say(t('ed.saved', { name: level.name }));
   }
 
   private async exportCode(): Promise<void> {
     const code = await levelToCode(await this.world.captureLevel(this.meta()));
     try {
       await navigator.clipboard.writeText(code);
-      this.say(`Share code copied (${code.length} characters)`);
+      this.say(t('ed.copied', { n: code.length }));
     } catch {
-      prompt('Copy your level code:', code); // clipboard blocked — show it instead
+      prompt(t('lib.copyprompt'), code); // clipboard blocked — show it instead
     }
   }
 
@@ -276,7 +279,7 @@ export class Editor {
     }
     const spell = this.stoneSpell;
     this.monumentBtn.innerHTML = `${spellIcon(spell, 14)}<span></span>`;
-    (this.monumentBtn.lastChild as HTMLElement).textContent = 'Stone';
+    (this.monumentBtn.lastChild as HTMLElement).textContent = t('ed.stone');
     for (const s of this.selects) s.paint();
   }
 

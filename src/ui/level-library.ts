@@ -165,7 +165,7 @@ export class LevelLibrary {
       if (getRating(e.id) < minStars) return false;
       if (!q) return true;
       const name = e.campaign?.title ?? e.level?.name ?? offName(e.id) ?? e.id;
-      const author = e.level?.author ?? 'Tribal Gods';
+      const author = e.level?.author ?? t('lib.author.default');
       return (name + ' ' + author).toLowerCase().includes(q);
     });
 
@@ -192,7 +192,7 @@ export class LevelLibrary {
     const card = document.createElement('div');
     card.className = 'lib-card tg-panel mat-hide';
     const name = e.campaign ? `${e.campaign.chapter}. ${e.campaign.title}` : tx(e.level?.name ?? '') || offName(e.id) || e.id;
-    const author = e.level?.author ?? 'Tribal Gods';
+    const author = e.level?.author ?? t('lib.author.default');
     const desc = e.campaign ? (e.campaign.locked ? t('lib.locked') : e.campaign.tagline) : tx(e.level?.desc ?? '') || offDesc(e.id);
 
     const head = document.createElement('div');
