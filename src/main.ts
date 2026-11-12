@@ -21,7 +21,7 @@
  */
 
 import './i18n-catalog'; // first: patches the catalog to the chosen language before any module reads it
-import { t } from './i18n';
+import { t, tx } from './i18n';
 import * as THREE from 'three';
 import { WORLD_SIZE } from './config';
 import { startLoop } from './core/loop';
@@ -291,7 +291,7 @@ function autosave(): void {
   if (world.gameOver) return clearSave();
   if (world.elapsed < 5) return;
   const kind = campaign.active ? 'campaign' : lastStart.level ? 'level' : 'skirmish';
-  const what = kind === 'campaign' ? campaign.titleOf(campaign.active!) : kind === 'level' ? lastStart.level!.name : t('menu.skirmish');
+  const what = kind === 'campaign' ? campaign.titleOf(campaign.active!) : kind === 'level' ? tx(lastStart.level!.name) : t('menu.skirmish');
   writeSave({
     v: 1,
     kind,
