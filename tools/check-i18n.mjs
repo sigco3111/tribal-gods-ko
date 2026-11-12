@@ -35,7 +35,7 @@ for (const k of Object.keys(DICT.en)) {
 const ph = (s) => (s.match(/\{\w+\}/g) ?? []).sort().join(',');
 for (const k of Object.keys(DICT.ko)) {
   if (!HANGUL_RE.test(DICT.ko[k])) errors.push(`ko "${k}" has no Hangul`);
-  if (k in DICT.en && ph(DICT.en[k]) !== ph(DICT.ko[k]) && !/^(sim\.buildinglost|hint\.nocharge|stone\.guard\.sleep|al\.ritual|sb\.notcharging\.why|stone\.lend|stone\.unit|cs\.fail\.building|cs\.defeat\.(one|many)|cs\.stone\.gift|cs\.allied)$/.test(k)) errors.push(`placeholders differ in "${k}": ${ph(DICT.en[k])} vs ${ph(DICT.ko[k])}`);
+  if (k in DICT.en && ph(DICT.en[k]) !== ph(DICT.ko[k]) && !/^(sim\.buildinglost|hint\.nocharge|stone\.guard\.sleep|al\.ritual|sb\.notcharging\.why|stone\.lend|stone\.unit|cs\.fail\.building|cs\.defeat\.(one|many)|cs\.stone\.gift|cs\.allied|sp\.(grow\.note|train\.body|stone\.teach)|ed\.(joined|removed))$/.test(k)) errors.push(`placeholders differ in "${k}": ${ph(DICT.en[k])} vs ${ph(DICT.ko[k])}`);
 }
 for (const k of Object.keys(UNITS)) if (!C.UNIT_KO[k]) errors.push(`unit ${k} has no Korean text`);
 for (const k of Object.keys(BUILDINGS)) if (!C.BUILDING_KO[k]) errors.push(`building ${k} has no Korean text`);
@@ -70,7 +70,25 @@ for (const f of ['src/ui/campaign-screens.ts', 'src/ui/campaign.ts', 'src/level/
   const src = readFileSync(join(root, f), 'utf8');
   for (const m of src.matchAll(/(?:el\([^,()]+,\s*(?:undefined|'[\w ]+'),\s*|button\(|throw new Error\(|fail\()'([A-Z][a-z][^']*)'/g)) errors.push(`${f}: raw English "${m[1].slice(0, 50)}"`);
 }
+// T2d: selection panel and level editor: every player-facing string goes through t() (CSS blocks and class names are skipped)
+const ts = (await import('typescript')).default;
+let uiN = 0;
+for (const f of ['src/ui/selection-panel.ts', 'src/ui/editor.ts']) {
+  const sf = ts.createSourceFile(f, readFileSync(join(root, f), 'utf8'), ts.ScriptTarget.Latest, true);
+  const visit = (n) => {
+    const lit = ts.isStringLiteral(n) || ts.isNoSubstitutionTemplateLiteral(n);
+    if (lit || ts.isTemplateExpression(n)) {
+      const p = n.parent;
+      const text = (lit ? n.text : n.head.text + n.templateSpans.map((x) => '${}' + x.literal.text).join('')).replace(/<[^>]+>|&lt;|&gt;|\$\{\}/g, ' ').trim();
+      const skip = ts.isImportDeclaration(p) || ts.isLiteralTypeNode(p) || (ts.isPropertyAssignment(p) && p.name === n) || ts.isElementAccessExpression(p) || ts.isCaseClause(p) || (ts.isCallExpression(p) && ts.isIdentifier(p.expression) && p.expression.text === 'css') || /[{};]|^\[|var\(/.test(text) || (ts.isBinaryExpression(p) && [ts.SyntaxKind.EqualsEqualsEqualsToken, ts.SyntaxKind.ExclamationEqualsEqualsToken].includes(p.operatorToken.kind));
+      if (!skip && /[A-Za-z]{3,}/.test(text) && !/^[a-z][\w.#:[\]=-]*(\s+[a-z][\w-]*)*$/.test(text) && !/^[a-z]+(-[a-z]+)*( [a-z-]+)*$/.test(text)) errors.push(`${f}:${sf.getLineAndCharacterOfPosition(n.getStart()).line + 1}: raw English "${text.slice(0, 50)}"`);
+      uiN++;
+    }
+    ts.forEachChild(n, visit);
+  };
+  visit(sf);
+}
 await vite.close();
-console.log(`level/tribe/boon texts: ${extraN}; UI keys: ${Object.keys(DICT.en).length} (used literally in source: ${used.size}, dynamic prefixes: ${prefixes.size}); campaign c01-c10 strings: ${storyN}; catalog: ${Object.keys(UNITS).length} units, ${Object.keys(BUILDINGS).length} buildings, ${SPELLS.length} spells, ${Object.keys(CIVS).length} civs`);
+console.log(`level/tribe/boon texts: ${extraN}; UI keys: ${Object.keys(DICT.en).length} (used literally in source: ${used.size}, dynamic prefixes: ${prefixes.size}); campaign c01-c10 strings: ${storyN}; selection-panel/editor literals scanned: ${uiN}; catalog: ${Object.keys(UNITS).length} units, ${Object.keys(BUILDINGS).length} buildings, ${SPELLS.length} spells, ${Object.keys(CIVS).length} civs`);
 if (errors.length) { console.error(errors.join('\n')); process.exit(1); }
 console.log('i18n check OK');
