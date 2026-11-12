@@ -10,6 +10,7 @@
  */
 
 import { PAIRS } from './i18n-ui';
+import { STORY_PAIRS } from './i18n-story';
 
 export type Lang = 'ko' | 'en';
 export const LANGS: Lang[] = ['ko', 'en'];
@@ -18,7 +19,7 @@ export const HANGUL_RE = /[\uAC00-\uD7A3\u3131-\u318E]/;
 
 /** key → [English, Korean]. */
 export const DICT: Record<Lang, Record<string, string>> = { en: {}, ko: {} };
-for (const [k, [en, ko]] of Object.entries(PAIRS)) {
+for (const [k, [en, ko]] of Object.entries({ ...PAIRS, ...STORY_PAIRS })) {
   DICT.en[k] = en;
   DICT.ko[k] = ko;
 }
@@ -73,6 +74,7 @@ const PATTERNS: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
   [/^Needs (\d+) more wood$/, (m) => t('sim.morewood', { n: m[1] })],
   [/^Your (.+) was lost\.$/, (m) => t('sim.buildinglost', { name: m[1], p: josa(m[1], '을/를') })],
   [/^(.+) — done\.$/, (m) => t('sim.done', { text: tx(m[1]) })],
+  [/^Raise (\d+) Dwellings$/, (m) => t('sim.c01.huts', { n: m[1] })],
   [/^One planet, (\d+) gods\. Only one tribe walks away\.$/, (m) => t('sim.skirmish.many', { n: m[1] })],
 ];
 
