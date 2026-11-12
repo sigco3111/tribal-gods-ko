@@ -78,9 +78,45 @@ describe.skipIf(!JSDOM)('campaign story in Korean (c01–c10)', () => {
       for (const li of root.querySelectorAll('li')) expect(li.textContent).toMatch(HANGUL);
       const objs = [...root.querySelectorAll('.tgc-obj')].map((e) => e.textContent ?? '');
       expect(objs.length).toBeGreaterThan(0);
-      // '✕ …' lines are generic defeat conditions from campaign-screens.ts (chrome, still English: NOTES.md)
-      for (const o of objs.filter((x) => !x.startsWith('✕'))) expect(o).toMatch(HANGUL);
+      for (const o of objs) expect(o).toMatch(HANGUL); // includes the '✕ …' defeat lines (T2c)
+      // the side panel (headings, loadout chips, stones, other tribes) and the buttons are Korean too
+      for (const e of root.querySelectorAll('.tgc-h, .tgc-chip, button')) expect(e.textContent, e.outerHTML).toMatch(HANGUL);
+      for (const e of root.querySelectorAll('.tgc-grid > .tgc-panel:last-child > div:not(.tgc-h):not(.tgc-chips)')) expect(e.textContent, e.outerHTML).toMatch(HANGUL);
+      expect(root.textContent).not.toMatch(/the (Ashmark|Saltborn|Unmoored|Keepers|Lantern-folk)/);
       document.body.innerHTML = '';
     }
+  });
+
+  it('campaign map and debrief screens are Korean', async () => {
+    vi.resetModules();
+    install('http://localhost/');
+    await import('../src/i18n-catalog');
+    const { CampaignMapScreen, DebriefScreen } = await import('../src/ui/campaign-screens');
+    const map = new CampaignMapScreen({ onPick() {}, onClose() {} });
+    const node = (chapter: number, state: 'locked' | 'open' | 'won', current = false) => ({ id: 'x' + chapter, chapter, title: 'Landfall', tagline: 'Raise a road out of the sea. Then a mountain.', teaches: 'Causeway, Kindle', state, current, bestTime: 125, stars: 1, starsTotal: 2, boon: state === 'won' ? 'Deep Well' : undefined });
+    map.show([node(1, 'won'), node(2, 'open', true), node(3, 'open'), node(4, 'locked')]);
+    const text = document.body.textContent ?? '';
+    expect(text).toContain('긴 밀물');
+    expect(text).toContain('최고 기록 2:05');
+    expect(text).toContain('다음 길');
+    expect(text).toContain('잠김');
+    expect(text).not.toMatch(/\b(best|locked|open|next on the road|Back)\b/);
+    document.body.innerHTML = '';
+    const deb = new DebriefScreen({ onNext() {}, onRetry() {}, onMap() {}, onBoon() {} });
+    deb.show({ chapter: 2, title: 'The Speaking Stones', result: 'victory', reason: 'x', seconds: 300, bestTime: 250, objectives: [{ text: 'Landfall', done: true, optional: false }], boonOffer: ['kinfolk', 'deepWell'], boonChosen: null, hasNext: true });
+    const d = document.body.textContent ?? '';
+    for (const w of ['시간', '최고 기록', '캠페인 지도', '다시 플레이', '다음 장']) expect(d).toContain(w);
+    expect(d).not.toMatch(/\b(Time|Campaign map|Play again|Next chapter|Choose a boon)\b/);
+  });
+
+  it('failText / defeat lines / loadout notes are Korean', async () => {
+    vi.resetModules();
+    install('http://localhost/');
+    await import('../src/i18n-catalog');
+    const { failText } = await import('../src/ui/campaign-screens');
+    expect(failText({ type: 'leaderDies' })).toMatch(HANGUL);
+    expect(failText({ type: 'timeLimit', seconds: 725 })).toBe('12:05 안에 끝내세요.');
+    expect(failText({ type: 'buildingLost', kind: 'hut' } as never)).toBe('거처를 모두 잃으면 끝입니다.');
+    expect(failText({ type: 'monumentTaken' } as never)).toMatch(HANGUL);
   });
 });
